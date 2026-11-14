@@ -4,21 +4,21 @@ Machine: macOS-27.2.1-arm64-arm-64bit-Mach-O / arm
 
 | shape | variant | median ms | p10 ms | p90 ms | GFLOP/s | speedup | predicted DRAM bytes (model) |
 |---|---|---:|---:|---:|---:|---:|---:|
-| matmul_256 | untiled | 23.100 | 20.155 | 25.364 | 1.45 | 1.00x | 786432 |
-| matmul_256 | tiled_fused | 22.340 | 20.132 | 26.174 | 1.50 | 1.03x | 786432 |
-| matmul_256 | tiled_fused_promoted_vectorized | 14.688 | 14.256 | 16.861 | 2.28 | 1.57x | 2621440 |
-| matmul_1024 | untiled | 2269.195 | 2088.985 | 2630.559 | 0.95 | 1.00x | 12884901888 |
-| matmul_1024 | tiled_fused | 2025.236 | 1649.657 | 2254.319 | 1.06 | 1.12x | 71303168 |
-| matmul_1024 | tiled_fused_promoted_vectorized | 632.391 | 588.406 | 727.408 | 3.40 | 3.59x | 167772160 |
-| matmul_nondivisible | untiled | 10.903 | 10.620 | 11.505 | 3.12 | 1.00x | 924684 |
-| matmul_nondivisible | tiled_fused | 12.144 | 11.550 | 13.070 | 2.80 | 0.90x | 924684 |
-| matmul_nondivisible | tiled_fused_promoted_vectorized | 9.811 | 9.315 | 11.858 | 3.47 | 1.11x | 5898240 |
-| attention_seq128 | untiled | 1.208 | 1.198 | 1.311 | 3.54 | 1.00x | 196608 |
-| attention_seq128 | tiled_fused | 1.207 | 1.201 | 1.251 | 3.54 | 1.00x | 196608 |
-| attention_seq128 | tiled_fused_promoted_vectorized | 1.324 | 1.284 | 1.833 | 3.23 | 0.91x | 196608 |
-| attention_seq512 | untiled | 28.286 | 27.605 | 31.582 | 2.42 | 1.00x | 1572864 |
-| attention_seq512 | tiled_fused | 27.856 | 26.015 | 36.240 | 2.46 | 1.02x | 1572864 |
-| attention_seq512 | tiled_fused_promoted_vectorized | 23.936 | 22.906 | 33.604 | 2.86 | 1.18x | 3145728 |
+| matmul_256 | untiled | 14.170 | 13.790 | 14.819 | 2.37 | 1.00x | 786432 |
+| matmul_256 | tiled_fused | 8.107 | 7.791 | 8.395 | 4.14 | 1.75x | 3145728 |
+| matmul_256 | tiled_fused_promoted_vectorized | 7.713 | 7.476 | 8.191 | 4.35 | 1.84x | 3145728 |
+| matmul_1024 | untiled | 1335.999 | 1275.773 | 1459.160 | 1.61 | 1.00x | 12884901888 |
+| matmul_1024 | tiled_fused | 1138.192 | 1105.312 | 1187.221 | 1.89 | 1.17x | 201326592 |
+| matmul_1024 | tiled_fused_promoted_vectorized | 450.919 | 444.377 | 486.725 | 4.76 | 2.96x | 201326592 |
+| matmul_nondivisible | untiled | 9.473 | 9.254 | 9.878 | 3.59 | 1.00x | 924684 |
+| matmul_nondivisible | tiled_fused | 9.450 | 9.228 | 9.599 | 3.60 | 1.00x | 4675968 |
+| matmul_nondivisible | tiled_fused_promoted_vectorized | 9.433 | 9.200 | 9.806 | 3.61 | 1.00x | 4675968 |
+| attention_seq128 | untiled | 1.094 | 1.089 | 1.183 | 3.91 | 1.00x | 196608 |
+| attention_seq128 | tiled_fused | 0.610 | 0.600 | 0.658 | 7.02 | 1.79x | 393216 |
+| attention_seq128 | tiled_fused_promoted_vectorized | 0.607 | 0.602 | 0.633 | 7.04 | 1.80x | 393216 |
+| attention_seq512 | untiled | 21.311 | 21.179 | 21.676 | 3.21 | 1.00x | 1572864 |
+| attention_seq512 | tiled_fused | 10.158 | 9.935 | 10.376 | 6.74 | 2.10x | 6291456 |
+| attention_seq512 | tiled_fused_promoted_vectorized | 10.515 | 10.214 | 11.121 | 6.51 | 2.03x | 6291456 |
 
 `predicted DRAM bytes` is produced by the analytical cost model;
 runtime columns are measured with `time.perf_counter` (median of 20).

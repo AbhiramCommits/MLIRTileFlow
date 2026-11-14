@@ -13,9 +13,6 @@ namespace tileflow {
 /// Discardable attribute name used to carry a schedule through the linalg and
 /// loop stages.
 constexpr StringLiteral kScheduleAttrName = "tileflow.schedule";
-/// Marks a function that was produced by the GPU lowering path.
-constexpr StringLiteral kGpuTargetAttrName = "tileflow.gpu_target";
-
 /// Enables per-transformation remarks (`-tileflow-remarks`).
 extern llvm::cl::opt<bool> tileflowRemarks;
 

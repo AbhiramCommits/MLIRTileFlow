@@ -25,29 +25,25 @@ using namespace mlir::tileflow;
 
 static llvm::cl::OptionCategory tuneCategory("tileflow-tune options");
 
-static llvm::cl::opt<std::string> inputFile(llvm::cl::Positional,
-                                            llvm::cl::desc("<input .mlir>"),
-                                            llvm::cl::init(""),
-                                            llvm::cl::cat(tuneCategory));
-static llvm::cl::opt<std::string> machinePath(
-    "machine", llvm::cl::desc("Machine description JSON"),
-    llvm::cl::init("bench/machine.json"), llvm::cl::cat(tuneCategory));
-static llvm::cl::opt<std::string> jsonPath(
-    "json", llvm::cl::desc("Ranking JSON output"),
-    llvm::cl::init("results/cost_model_ranking.json"),
-    llvm::cl::cat(tuneCategory));
-static llvm::cl::opt<std::string> logPath(
-    "log", llvm::cl::desc("Tuning log output"),
-    llvm::cl::init("results/tune_log.txt"), llvm::cl::cat(tuneCategory));
-static llvm::cl::opt<std::string> annotateInput(
-    "annotate", llvm::cl::desc("Write the winning schedule into this .mlir"),
-    llvm::cl::init(""), llvm::cl::cat(tuneCategory));
-static llvm::cl::opt<std::string> annotateOutput(
-    "o", llvm::cl::desc("Output file for --annotate"),
-    llvm::cl::init(""), llvm::cl::cat(tuneCategory));
-static llvm::cl::opt<unsigned> topCount(
-    "top", llvm::cl::desc("Number of ranked candidates to print"),
-    llvm::cl::init(20), llvm::cl::cat(tuneCategory));
+static llvm::cl::opt<std::string> inputFile(llvm::cl::Positional, llvm::cl::desc("<input .mlir>"),
+                                            llvm::cl::init(""), llvm::cl::cat(tuneCategory));
+static llvm::cl::opt<std::string> machinePath("machine", llvm::cl::desc("Machine description JSON"),
+                                              llvm::cl::init("bench/machine.json"),
+                                              llvm::cl::cat(tuneCategory));
+static llvm::cl::opt<std::string> jsonPath("json", llvm::cl::desc("Ranking JSON output"),
+                                           llvm::cl::init("results/cost_model_ranking.json"),
+                                           llvm::cl::cat(tuneCategory));
+static llvm::cl::opt<std::string> logPath("log", llvm::cl::desc("Tuning log output"),
+                                          llvm::cl::init("results/tune_log.txt"),
+                                          llvm::cl::cat(tuneCategory));
+static llvm::cl::opt<std::string>
+    annotateInput("annotate", llvm::cl::desc("Write the winning schedule into this .mlir"),
+                  llvm::cl::init(""), llvm::cl::cat(tuneCategory));
+static llvm::cl::opt<std::string> annotateOutput("o", llvm::cl::desc("Output file for --annotate"),
+                                                 llvm::cl::init(""), llvm::cl::cat(tuneCategory));
+static llvm::cl::opt<unsigned> topCount("top",
+                                        llvm::cl::desc("Number of ranked candidates to print"),
+                                        llvm::cl::init(20), llvm::cl::cat(tuneCategory));
 
 namespace {
 
@@ -56,8 +52,7 @@ struct Candidate {
   LocalityCostResult result;
 };
 
-static std::vector<std::vector<int64_t>>
-permutations(int64_t rank) {
+static std::vector<std::vector<int64_t>> permutations(int64_t rank) {
   std::vector<std::vector<int64_t>> result;
   std::vector<int64_t> current;
   std::vector<bool> used(rank, false);
@@ -103,13 +98,17 @@ static std::vector<std::string> promoteSetFor(StringRef opName) {
 static bool better(const Candidate &a, const Candidate &b) {
   if (a.result.feasible != b.result.feasible)
     return a.result.feasible;
+  // Total bytes moved across the hierarchy is the primary locality cost;
+  // DRAM traffic and arithmetic intensity break ties.
+  int64_t totalA = 0, totalB = 0;
+  for (int64_t bytes : a.result.bytesPerLevel)
+    totalA += bytes;
+  for (int64_t bytes : b.result.bytesPerLevel)
+    totalB += bytes;
+  if (totalA != totalB)
+    return totalA < totalB;
   if (a.result.dramBytes != b.result.dramBytes)
     return a.result.dramBytes < b.result.dramBytes;
-  // Break DRAM ties by innermost-level traffic: a schedule that keeps the
-  // working set in L1 moves less data even when DRAM traffic is equal.
-  if (!a.result.bytesPerLevel.empty() && !b.result.bytesPerLevel.empty() &&
-      a.result.bytesPerLevel.front() != b.result.bytesPerLevel.front())
-    return a.result.bytesPerLevel.front() < b.result.bytesPerLevel.front();
   return a.result.arithmeticIntensity > b.result.arithmeticIntensity;
 }
 
@@ -125,9 +124,8 @@ static FailureOr<Operation *> findTunableOp(ModuleOp module) {
 }
 
 static void writeJSON(StringRef path, const MachineDescription &machine,
-                      const LocalityCostInput &input,
-                      ArrayRef<Candidate> candidates, size_t enumerated,
-                      size_t feasible, const Candidate &winner) {
+                      const LocalityCostInput &input, ArrayRef<Candidate> candidates,
+                      size_t enumerated, size_t feasible, const Candidate &winner) {
   llvm::SmallString<128> parent(path);
   llvm::sys::path::remove_filename(parent);
   if (!parent.empty())
@@ -176,10 +174,8 @@ static void writeJSON(StringRef path, const MachineDescription &machine,
     for (int64_t bytes : candidate.result.bytesPerLevel)
       bytesPerLevel.push_back(bytes);
     object["bytes_per_level"] = std::move(bytesPerLevel);
-    object["arithmetic_intensity"] =
-        candidate.result.arithmeticIntensity;
-    object["average_reuse_distance_bytes"] =
-        candidate.result.averageReuseDistanceBytes;
+    object["arithmetic_intensity"] = candidate.result.arithmeticIntensity;
+    object["average_reuse_distance_bytes"] = candidate.result.averageReuseDistanceBytes;
     object["scratchpad_bytes"] = candidate.result.scratchpadBytes;
     ranked.push_back(std::move(object));
   }
@@ -189,17 +185,15 @@ static void writeJSON(StringRef path, const MachineDescription &machine,
   std::error_code error;
   llvm::raw_fd_ostream out(path, error);
   if (error) {
-    llvm::errs() << "tileflow-tune: cannot write " << path << ": "
-                 << error.message() << "\n";
+    llvm::errs() << "tileflow-tune: cannot write " << path << ": " << error.message() << "\n";
     return;
   }
   out << llvm::json::Value(std::move(root)) << "\n";
 }
 
 static void writeLog(StringRef path, const MachineDescription &machine,
-                     const LocalityCostInput &input, size_t enumerated,
-                     size_t feasible, size_t bruteForce,
-                     const Candidate &winner) {
+                     const LocalityCostInput &input, size_t enumerated, size_t feasible,
+                     size_t bruteForce, const Candidate &winner) {
   llvm::SmallString<128> parent(path);
   llvm::sys::path::remove_filename(parent);
   if (!parent.empty())
@@ -215,8 +209,7 @@ static void writeLog(StringRef path, const MachineDescription &machine,
   out << "candidates enumerated: " << enumerated << "\n";
   out << "candidates ranked by cost model: " << enumerated << "\n";
   out << "candidates feasible after scratchpad check: " << feasible << "\n";
-  out << "candidates needing compilation under brute force: " << bruteForce
-      << "\n";
+  out << "candidates needing compilation under brute force: " << bruteForce << "\n";
   out << "winner tiles: [";
   llvm::interleaveComma(winner.schedule.tiles, out);
   out << "]\nwinner order: [";
@@ -225,18 +218,15 @@ static void writeLog(StringRef path, const MachineDescription &machine,
   llvm::interleaveComma(winner.schedule.promote, out);
   out << "]\n";
   out << "winner estimated DRAM bytes: " << winner.result.dramBytes << "\n";
-  out << "winner arithmetic intensity: " << winner.result.arithmeticIntensity
-      << "\n";
-  out << "winner average reuse distance bytes: "
-      << winner.result.averageReuseDistanceBytes << "\n";
+  out << "winner arithmetic intensity: " << winner.result.arithmeticIntensity << "\n";
+  out << "winner average reuse distance bytes: " << winner.result.averageReuseDistanceBytes << "\n";
 }
 
 } // namespace
 
 int main(int argc, char **argv) {
-  llvm::cl::ParseCommandLineOptions(
-      argc, argv,
-      "tileflow-tune: analytical data-locality schedule selector\n");
+  llvm::cl::ParseCommandLineOptions(argc, argv,
+                                    "tileflow-tune: analytical data-locality schedule selector\n");
 
   std::string source = !annotateInput.empty() ? annotateInput : inputFile;
   if (source.empty()) {
@@ -249,8 +239,7 @@ int main(int argc, char **argv) {
   if (succeeded(loaded))
     machine = std::move(*loaded);
   else {
-    llvm::errs() << "tileflow-tune: cannot load machine description '"
-                 << machinePath << "'\n";
+    llvm::errs() << "tileflow-tune: cannot load machine description '" << machinePath << "'\n";
     return 1;
   }
 
@@ -270,8 +259,7 @@ int main(int argc, char **argv) {
 
   auto target = findTunableOp(*module);
   if (failed(target)) {
-    llvm::errs() << "tileflow-tune: no tileflow compute op found in "
-                 << source << "\n";
+    llvm::errs() << "tileflow-tune: no tileflow compute op found in " << source << "\n";
     return 1;
   }
   auto input = buildCostInput(*target);
@@ -282,8 +270,7 @@ int main(int argc, char **argv) {
 
   LocalityCostModel model(machine);
   std::vector<int64_t> choices = tileChoices(input->extents);
-  std::vector<std::vector<int64_t>> orders =
-      permutations(input->extents.size());
+  std::vector<std::vector<int64_t>> orders = permutations(input->extents.size());
   std::vector<std::string> promoteNames = promoteSetFor(input->opName);
 
   size_t enumerated = 0;
@@ -339,9 +326,8 @@ int main(int argc, char **argv) {
                   "avg_reuse_distance tiles order promote\n";
   for (size_t i = 0; i < shown; ++i) {
     const Candidate &candidate = candidates[i];
-    llvm::outs() << i + 1 << " " << (candidate.result.feasible ? "yes" : "no ")
-                 << " " << candidate.result.dramBytes << " "
-                 << candidate.result.arithmeticIntensity << " "
+    llvm::outs() << i + 1 << " " << (candidate.result.feasible ? "yes" : "no ") << " "
+                 << candidate.result.dramBytes << " " << candidate.result.arithmeticIntensity << " "
                  << candidate.result.averageReuseDistanceBytes << " [";
     llvm::interleaveComma(candidate.schedule.tiles, llvm::outs());
     llvm::outs() << "] [";
@@ -355,13 +341,10 @@ int main(int argc, char **argv) {
   }
   llvm::outs() << "# candidates enumerated: " << enumerated << "\n";
   llvm::outs() << "# candidates ranked by cost model: " << enumerated << "\n";
-  llvm::outs() << "# candidates feasible after scratchpad check: " << feasible
-               << "\n";
-  llvm::outs() << "# candidates needing compilation under brute force: "
-               << enumerated << "\n";
+  llvm::outs() << "# candidates feasible after scratchpad check: " << feasible << "\n";
+  llvm::outs() << "# candidates needing compilation under brute force: " << enumerated << "\n";
 
-  writeJSON(jsonPath, machine, *input, candidates, enumerated, feasible,
-            winner);
+  writeJSON(jsonPath, machine, *input, candidates, enumerated, feasible, winner);
   writeLog(logPath, machine, *input, enumerated, feasible, enumerated, winner);
 
   if (!annotateInput.empty()) {
@@ -372,9 +355,9 @@ int main(int argc, char **argv) {
     SmallVector<StringRef> promoteNames;
     for (const std::string &name : winner.schedule.promote)
       promoteNames.push_back(name);
-    ScheduleAttr schedule = ScheduleAttr::get(
-        &context, winner.schedule.tiles, winner.schedule.order,
-        winner.schedule.unroll, promoteNames, winner.schedule.target);
+    ScheduleAttr schedule =
+        ScheduleAttr::get(&context, winner.schedule.tiles, winner.schedule.order,
+                          winner.schedule.unroll, promoteNames, winner.schedule.target);
     Operation *op = *target;
     if (auto matmul = dyn_cast<MatmulOp>(op))
       matmul.setScheduleAttr(schedule);

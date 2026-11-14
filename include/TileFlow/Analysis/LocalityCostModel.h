@@ -30,9 +30,7 @@ struct MachineDescription {
   unsigned getNumCaches() const {
     return levels.empty() ? 0 : static_cast<unsigned>(levels.size() - 1);
   }
-  int64_t getDramCapacity() const {
-    return levels.empty() ? 0 : levels.back().capacityBytes;
-  }
+  int64_t getDramCapacity() const { return levels.empty() ? 0 : levels.back().capacityBytes; }
 
   /// Real parameters of the machine this build was measured on.
   static MachineDescription getDefault();
@@ -85,13 +83,11 @@ struct LocalityCostResult {
 
 class LocalityCostModel {
 public:
-  explicit LocalityCostModel(MachineDescription machine)
-      : machine(std::move(machine)) {}
+  explicit LocalityCostModel(MachineDescription machine) : machine(std::move(machine)) {}
 
   const MachineDescription &getMachine() const { return machine; }
 
-  LocalityCostResult evaluate(const LocalityCostInput &input,
-                              const ScheduleParams &schedule) const;
+  LocalityCostResult evaluate(const LocalityCostInput &input, const ScheduleParams &schedule) const;
 
 private:
   MachineDescription machine;

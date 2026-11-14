@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import math
 import subprocess
 import tempfile
 from pathlib import Path
@@ -52,7 +51,7 @@ def _schedule_from_winner(winner, promote_names):
     return tiles, order, promote
 
 
-def _shrink_to_scratchpad(tiles, element_bytes, num_operands, loop_bits):
+def _shrink_to_scratchpad(tiles, element_bytes, loop_bits):
     """Halve the largest tile until the promoted operands fit the scratchpad."""
     tiles = list(tiles)
     while True:
@@ -104,12 +103,10 @@ def tune_schedule(source: str, kind: str, promote: bool, target: str = "cpu"):
 
     if kind == "matmul":
         promote_names = ["A", "B"]
-        tiles = _shrink_to_scratchpad(winner["tiles"], 4, 2, [[0, 2], [2, 1]])
+        tiles = _shrink_to_scratchpad(winner["tiles"], 4, [[0, 2], [2, 1]])
     elif kind == "attention":
         promote_names = ["K", "V"]
-        tiles = _shrink_to_scratchpad(
-            winner["tiles"], 4, 2, [[0, 2, 3], [0, 2, 3]]
-        )
+        tiles = _shrink_to_scratchpad(winner["tiles"], 4, [[0, 2, 3], [0, 2, 3]])
     else:
         promote_names = []
         tiles = winner["tiles"]

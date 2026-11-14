@@ -1,0 +1,21 @@
+[ 22%] Built target TileFlowOpsIncGen
+[ 22%] Built target mlir-headers
+[ 22%] Built target mlir-generic-headers
+[ 33%] Built target obj.TileFlowDialect
+[ 37%] Built target TileFlowDialect
+[ 40%] Built target TileFlowPassIncGen
+[ 48%] Built target obj.TileFlowAnalysis
+[ 51%] Built target TileFlowAnalysis
+[ 59%] Built target tileflow-tune
+[ 85%] Built target obj.TileFlowTransforms
+[ 88%] Built target TileFlowTransforms
+[ 96%] Built target tileflow-opt
+[100%] Running the TileFlow regression tests
+-- Testing: 16 tests, 8 workers --
+Testing:  0.. 10.. 20.. 30.. 40.. 50.. 60.. 70.. 80.. 90.. 
+
+Testing Time: 1.90s
+
+Total Discovered Tests: 16
+  Passed: 16 (100.00%)
+[100%] Built target check-tileflow

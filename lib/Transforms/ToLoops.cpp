@@ -26,8 +26,7 @@ using namespace mlir::tileflow;
 
 namespace {
 
-struct TileFlowToLoopsPass
-    : public mlir::tileflow::impl::TileFlowToLoopsBase<TileFlowToLoopsPass> {
+struct TileFlowToLoopsPass : public mlir::tileflow::impl::TileFlowToLoopsBase<TileFlowToLoopsPass> {
   using Base::Base;
 
   void runOnOperation() override {
@@ -73,9 +72,8 @@ struct TileFlowToLoopsPass
         auto generic = dyn_cast<linalg::GenericOp>(op.getOperation());
         if (!generic)
           continue;
-        if (llvm::any_of(generic.getIteratorTypesArray(), [](auto kind) {
-              return kind != utils::IteratorType::parallel;
-            }))
+        if (llvm::any_of(generic.getIteratorTypesArray(),
+                         [](auto kind) { return kind != utils::IteratorType::parallel; }))
           continue;
         if (generic.hasIndexSemantics())
           continue;

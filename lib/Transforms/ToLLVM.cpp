@@ -22,8 +22,7 @@ using namespace mlir::tileflow;
 
 namespace {
 
-struct TileFlowToLLVMPass
-    : public mlir::tileflow::impl::TileFlowToLLVMBase<TileFlowToLLVMPass> {
+struct TileFlowToLLVMPass : public mlir::tileflow::impl::TileFlowToLLVMBase<TileFlowToLLVMPass> {
   using Base::Base;
 
   void runOnOperation() override {

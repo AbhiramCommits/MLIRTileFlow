@@ -10,10 +10,10 @@
 using namespace mlir;
 using namespace mlir::tileflow;
 
-llvm::cl::opt<bool> tileflow::tileflowRemarks(
-    "tileflow-remarks",
-    llvm::cl::desc("Emit a remark for every TileFlow transformation"),
-    llvm::cl::init(false));
+llvm::cl::opt<bool>
+    tileflow::tileflowRemarks("tileflow-remarks",
+                              llvm::cl::desc("Emit a remark for every TileFlow transformation"),
+                              llvm::cl::init(false));
 
 ScheduleAttr tileflow::getSchedule(Operation *op) {
   return dyn_cast_or_null<ScheduleAttr>(op->getAttr(kScheduleAttrName));
@@ -39,10 +39,8 @@ void tileflow::stripSchedules(Operation *op) {
 bool tileflow::moduleHasTensors(ModuleOp module) {
   bool hasTensor = false;
   module.walk([&](Operation *op) {
-    if (llvm::any_of(op->getOperandTypes(),
-                     [](Type type) { return isa<TensorType>(type); }) ||
-        llvm::any_of(op->getResultTypes(),
-                     [](Type type) { return isa<TensorType>(type); })) {
+    if (llvm::any_of(op->getOperandTypes(), [](Type type) { return isa<TensorType>(type); }) ||
+        llvm::any_of(op->getResultTypes(), [](Type type) { return isa<TensorType>(type); })) {
       hasTensor = true;
       return WalkResult::interrupt();
     }
@@ -66,8 +64,7 @@ bool tileflow::moduleHasTensors(ModuleOp module) {
 LogicalResult tileflow::bufferizeModule(ModuleOp module) {
   bufferization::OneShotBufferizePassOptions options;
   options.bufferizeFunctionBoundaries = true;
-  options.functionBoundaryTypeConversion =
-      bufferization::LayoutMapOption::IdentityLayoutMap;
+  options.functionBoundaryTypeConversion = bufferization::LayoutMapOption::IdentityLayoutMap;
   PassManager pm(module.getContext());
   pm.addPass(bufferization::createOneShotBufferizePass(options));
   return pm.run(module);

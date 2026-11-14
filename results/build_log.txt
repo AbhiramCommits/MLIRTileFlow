@@ -1,0 +1,38 @@
+[  7%] Building Dialect/TileFlowAttrs.h.inc...
+[  7%] Building Dialect/TileFlowOps.h.inc...
+[  7%] Built target mlir-generic-headers
+[ 11%] Building Dialect/TileFlowOps.cpp.inc...
+[ 15%] Building Dialect/TileFlowAttrs.cpp.inc...
+[ 19%] Building Dialect/TileFlowOpsDialect.cpp.inc...
+[ 19%] Built target mlir-headers
+[ 23%] Building Dialect/TileFlowOpsDialect.h.inc...
+[ 23%] Built target TileFlowOpsIncGen
+[ 30%] Building CXX object lib/Dialect/CMakeFiles/obj.TileFlowDialect.dir/TileFlowDialect.cpp.o
+[ 34%] Building CXX object lib/Dialect/CMakeFiles/obj.TileFlowDialect.dir/TileFlowOps.cpp.o
+[ 34%] Building Transforms/Passes.h.inc...
+[ 38%] Building CXX object lib/Dialect/CMakeFiles/obj.TileFlowDialect.dir/TileFlowAttrs.cpp.o
+[ 38%] Built target TileFlowPassIncGen
+[ 38%] Built target obj.TileFlowDialect
+[ 42%] Linking CXX static library ../libTileFlowDialect.a
+[ 42%] Built target TileFlowDialect
+[ 50%] Building CXX object lib/Transforms/CMakeFiles/obj.TileFlowTransforms.dir/ApplySchedule.cpp.o
+[ 53%] Building CXX object lib/Transforms/CMakeFiles/obj.TileFlowTransforms.dir/TileFlowToLinalg.cpp.o
+[ 57%] Building CXX object lib/Analysis/CMakeFiles/obj.TileFlowAnalysis.dir/LocalityCostModel.cpp.o
+[ 57%] Building CXX object lib/Transforms/CMakeFiles/obj.TileFlowTransforms.dir/Passes.cpp.o
+[ 61%] Building CXX object lib/Transforms/CMakeFiles/obj.TileFlowTransforms.dir/Pipelines.cpp.o
+[ 65%] Building CXX object lib/Analysis/CMakeFiles/obj.TileFlowAnalysis.dir/TileFlowLocalityReport.cpp.o
+[ 69%] Building CXX object lib/Transforms/CMakeFiles/obj.TileFlowTransforms.dir/ToLoops.cpp.o
+[ 73%] Building CXX object lib/Transforms/CMakeFiles/obj.TileFlowTransforms.dir/ToLLVM.cpp.o
+[ 76%] Building CXX object lib/Transforms/CMakeFiles/obj.TileFlowTransforms.dir/Utils.cpp.o
+[ 76%] Built target obj.TileFlowAnalysis
+[ 80%] Linking CXX static library ../libTileFlowAnalysis.a
+[ 80%] Built target TileFlowAnalysis
+[ 84%] Building CXX object tools/tileflow-tune/CMakeFiles/tileflow-tune.dir/tileflow-tune.cpp.o
+[ 88%] Linking CXX executable ../../bin/tileflow-tune
+[ 88%] Built target tileflow-tune
+[ 88%] Built target obj.TileFlowTransforms
+[ 92%] Linking CXX static library ../libTileFlowTransforms.a
+[ 92%] Built target TileFlowTransforms
+[ 96%] Building CXX object tools/tileflow-opt/CMakeFiles/tileflow-opt.dir/tileflow-opt.cpp.o
+[100%] Linking CXX executable ../../bin/tileflow-opt
+[100%] Built target tileflow-opt

@@ -25,14 +25,12 @@ MachineDescription MachineDescription::getDefault() {
   return machine;
 }
 
-FailureOr<MachineDescription> MachineDescription::loadFromFile(
-    StringRef path) {
+FailureOr<MachineDescription> MachineDescription::loadFromFile(StringRef path) {
   auto buffer = llvm::MemoryBuffer::getFile(path);
   if (!buffer)
     return failure();
 
-  llvm::Expected<llvm::json::Value> parsed =
-      llvm::json::parse(buffer.get()->getBuffer());
+  llvm::Expected<llvm::json::Value> parsed = llvm::json::parse(buffer.get()->getBuffer());
   if (!parsed)
     return failure();
 
@@ -83,9 +81,7 @@ static bool isPermutation(ArrayRef<int64_t> order) {
   return true;
 }
 
-static int64_t ceilDiv(int64_t value, int64_t divisor) {
-  return (value + divisor - 1) / divisor;
-}
+static int64_t ceilDiv(int64_t value, int64_t divisor) { return (value + divisor - 1) / divisor; }
 
 static int64_t powerOfTwoBucket(int64_t bytes) {
   if (bytes <= 1)
@@ -98,8 +94,8 @@ static int64_t powerOfTwoBucket(int64_t bytes) {
 
 } // namespace
 
-LocalityCostResult LocalityCostModel::evaluate(
-    const LocalityCostInput &input, const ScheduleParams &schedule) const {
+LocalityCostResult LocalityCostModel::evaluate(const LocalityCostInput &input,
+                                               const ScheduleParams &schedule) const {
   LocalityCostResult result;
   const int64_t rank = static_cast<int64_t>(input.extents.size());
 
@@ -125,8 +121,7 @@ LocalityCostResult LocalityCostModel::evaluate(
       result.reason = "tile sizes must be strictly positive";
       return result;
     }
-    tiles[i] = std::max<int64_t>(1, std::min(schedule.tiles[i],
-                                             input.extents[i]));
+    tiles[i] = std::max<int64_t>(1, std::min(schedule.tiles[i], input.extents[i]));
     trips[i] = ceilDiv(input.extents[i], tiles[i]);
     totalTileIterations *= trips[i];
   }
@@ -138,8 +133,7 @@ LocalityCostResult LocalityCostModel::evaluate(
   // inside `startPosition`. Outer map dimensions contribute their tile size;
   // inner map dimensions contribute their full extent (all tiles are visited);
   // inner non-map dimensions contribute their trip count (reuse references).
-  auto touchedBytes = [&](const OperandAccess &operand,
-                          int64_t startPosition) -> int64_t {
+  auto touchedBytes = [&](const OperandAccess &operand, int64_t startPosition) -> int64_t {
     int64_t bytes = operand.elementBytes;
     for (int64_t loop = 0; loop < rank; ++loop) {
       int64_t position = positionOf[loop];
@@ -147,8 +141,7 @@ LocalityCostResult LocalityCostModel::evaluate(
         if (operand.dependsOnLoop[loop])
           bytes *= tiles[loop];
       } else {
-        bytes *= operand.dependsOnLoop[loop] ? input.extents[loop]
-                                             : trips[loop];
+        bytes *= operand.dependsOnLoop[loop] ? input.extents[loop] : trips[loop];
       }
     }
     return bytes;
@@ -199,8 +192,7 @@ LocalityCostResult LocalityCostModel::evaluate(
       distanceCount ? static_cast<double>(distanceSum) / distanceCount : 0.0;
 
   // Merge histogram buckets.
-  llvm::sort(result.reuseHistogram, [](const ReuseBucket &a,
-                                       const ReuseBucket &b) {
+  llvm::sort(result.reuseHistogram, [](const ReuseBucket &a, const ReuseBucket &b) {
     return a.bucketBytes < b.bucketBytes;
   });
   SmallVector<ReuseBucket> merged;
@@ -235,8 +227,7 @@ LocalityCostResult LocalityCostModel::evaluate(
         loadFactor *= blockFits ? trips[loop] : input.extents[loop];
       }
       int64_t bytes = stat.distinctTiles * stat.tileBytes * loadFactor;
-      int64_t upperBound =
-          totalElements * stat.operand->elementBytes * 4; // QK+PV headroom
+      int64_t upperBound = totalElements * stat.operand->elementBytes * 4; // QK+PV headroom
       bytes = std::min(bytes, upperBound);
       traffic += bytes;
     }
@@ -248,23 +239,20 @@ LocalityCostResult LocalityCostModel::evaluate(
     result.bytesPerLevel.back() = result.dramBytes;
 
   result.arithmeticIntensity =
-      result.dramBytes ? static_cast<double>(input.flops) /
-                             static_cast<double>(result.dramBytes)
+      result.dramBytes ? static_cast<double>(input.flops) / static_cast<double>(result.dramBytes)
                        : 0.0;
 
   // Scratchpad footprint of the promoted operands.
   int64_t scratchpad = 0;
   for (const OperandStats &stat : stats) {
-    if (llvm::find(schedule.promote, stat.operand->name) ==
-        schedule.promote.end())
+    if (llvm::find(schedule.promote, stat.operand->name) == schedule.promote.end())
       continue;
     scratchpad += stat.tileBytes;
   }
   result.scratchpadBytes = scratchpad;
 
   result.arithmeticIntensity =
-      result.dramBytes ? static_cast<double>(input.flops) /
-                             static_cast<double>(result.dramBytes)
+      result.dramBytes ? static_cast<double>(input.flops) / static_cast<double>(result.dramBytes)
                        : 0.0;
 
   if (scratchpad > machine.scratchpadBytes) {
@@ -315,8 +303,7 @@ FailureOr<LocalityCostInput> tileflow::buildCostInput(Operation *op) {
     input.operands.push_back({"O", {true, true, false, true}, bytes});
     int64_t heads = input.extents[0], seqQ = input.extents[1];
     int64_t seqK = input.extents[2], headDim = input.extents[3];
-    input.flops = 4 * heads * seqQ * seqK * headDim +
-                  5 * heads * seqQ * seqK;
+    input.flops = 4 * heads * seqQ * seqK * headDim + 5 * heads * seqQ * seqK;
     return input;
   }
   return failure();

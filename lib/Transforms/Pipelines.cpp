@@ -106,16 +106,15 @@ static void tileScheduledOpsForGPU(ModuleOp module) {
 
     unsigned numLoops = op.getNumLoops();
     ArrayRef<int64_t> scheduleTiles = schedule.getTileSizes();
-    SmallVector<utils::IteratorType> iteratorTypes =
-        op.getIteratorTypesArray();
+    SmallVector<utils::IteratorType> iteratorTypes = op.getIteratorTypesArray();
     SmallVector<OpFoldResult> sizes;
     SmallVector<Attribute> mapping;
     MLIRContext *ctx = module.getContext();
     for (unsigned i = 0; i < numLoops && i < scheduleTiles.size(); ++i) {
       // Reduction loops must stay sequential: distributing them over threads
       // would create cross-thread races.
-      bool isReduction = i < iteratorTypes.size() &&
-                         iteratorTypes[i] == utils::IteratorType::reduction;
+      bool isReduction =
+          i < iteratorTypes.size() && iteratorTypes[i] == utils::IteratorType::reduction;
       if (isReduction) {
         sizes.push_back(rewriter.getIndexAttr(0));
         continue;
@@ -133,8 +132,7 @@ static void tileScheduledOpsForGPU(ModuleOp module) {
     options.setTileSizes(sizes);
     options.setMapping(mapping);
 
-    auto tiled = scf::tileUsingSCF(rewriter, cast<TilingInterface>(op.getOperation()),
-                                   options);
+    auto tiled = scf::tileUsingSCF(rewriter, cast<TilingInterface>(op.getOperation()), options);
     if (failed(tiled))
       continue;
     rewriter.replaceOp(op, tiled->replacements);
@@ -199,34 +197,32 @@ struct TileFlowLowerToGPUPass
         rewriter.setInsertionPoint(parallel);
         Value one = arith::ConstantIndexOp::create(rewriter, loc, 1);
         SmallVector<Value> trips;
-        for (auto [lb, ub, step] : llvm::zip_equal(
-                 parallel.getLowerBound(), parallel.getUpperBound(),
-                 parallel.getStep())) {
+        for (auto [lb, ub, step] : llvm::zip_equal(parallel.getLowerBound(),
+                                                   parallel.getUpperBound(), parallel.getStep())) {
           Value range = arith::SubIOp::create(rewriter, loc, ub, lb);
-          Value rounded = arith::AddIOp::create(
-              rewriter, loc, range,
-              arith::SubIOp::create(rewriter, loc, step, one));
+          Value rounded = arith::AddIOp::create(rewriter, loc, range,
+                                                arith::SubIOp::create(rewriter, loc, step, one));
           trips.push_back(arith::DivUIOp::create(rewriter, loc, rounded, step));
         }
         while (trips.size() < 3)
           trips.push_back(one);
 
-        auto launch = gpu::LaunchOp::create(rewriter, loc, trips[0], trips[1],
-                                            trips[2], one, one, one);
+        auto launch =
+            gpu::LaunchOp::create(rewriter, loc, trips[0], trips[1], trips[2], one, one, one);
         Block &launchBody = launch.getBody().front();
         SmallVector<Value> ivs;
         {
           OpBuilder builder(&launchBody, launchBody.begin());
-          for (auto [index, lb, step] : llvm::enumerate(
-                   parallel.getLowerBound(), parallel.getStep())) {
+          for (auto [index, lb, step] :
+               llvm::enumerate(parallel.getLowerBound(), parallel.getStep())) {
             Value blockId = launchBody.getArgument(index);
-            Value scaled = builder.create<arith::MulIOp>(loc, blockId, step);
-            ivs.push_back(builder.create<arith::AddIOp>(loc, scaled, lb));
+            Value scaled = arith::MulIOp::create(builder, loc, blockId, step);
+            ivs.push_back(arith::AddIOp::create(builder, loc, scaled, lb));
           }
         }
 
         OpBuilder terminatorBuilder(&launchBody, launchBody.end());
-        auto terminator = terminatorBuilder.create<gpu::TerminatorOp>(loc);
+        auto terminator = gpu::TerminatorOp::create(terminatorBuilder, loc);
 
         Block &body = *parallel.getBody();
         for (auto [argument, iv] : llvm::zip_equal(body.getArguments(), ivs))

@@ -34,8 +34,7 @@ namespace {
 
 /// Tile one linalg op with SCF loops and replace its results.
 static LogicalResult tileOneOp(IRRewriter &rewriter, linalg::LinalgOp op,
-                               ArrayRef<int64_t> tileSizes,
-                               ArrayRef<int64_t> loopOrder) {
+                               ArrayRef<int64_t> tileSizes, ArrayRef<int64_t> loopOrder) {
   auto tilingInterface = dyn_cast<TilingInterface>(op.getOperation());
   if (!tilingInterface)
     return failure();
@@ -44,8 +43,7 @@ static LogicalResult tileOneOp(IRRewriter &rewriter, linalg::LinalgOp op,
   if (tileSizes.empty())
     return failure();
   SmallVector<int64_t> sizes(tileSizes.begin(),
-                             tileSizes.begin() +
-                                 std::min<size_t>(tileSizes.size(), numLoops));
+                             tileSizes.begin() + std::min<size_t>(tileSizes.size(), numLoops));
 
   scf::SCFTilingOptions options;
   SmallVector<OpFoldResult> sizesOfr;
@@ -58,8 +56,7 @@ static LogicalResult tileOneOp(IRRewriter &rewriter, linalg::LinalgOp op,
     options.setInterchange(loopOrder);
   }
 
-  FailureOr<scf::SCFTilingResult> tiled =
-      scf::tileUsingSCF(rewriter, tilingInterface, options);
+  FailureOr<scf::SCFTilingResult> tiled = scf::tileUsingSCF(rewriter, tilingInterface, options);
   if (failed(tiled))
     return failure();
 
@@ -67,8 +64,7 @@ static LogicalResult tileOneOp(IRRewriter &rewriter, linalg::LinalgOp op,
   return success();
 }
 
-static void collectScheduledOps(ModuleOp module,
-                                SmallVectorImpl<linalg::LinalgOp> &ops) {
+static void collectScheduledOps(ModuleOp module, SmallVectorImpl<linalg::LinalgOp> &ops) {
   module.walk([&](linalg::LinalgOp op) {
     if (getSchedule(op.getOperation()))
       ops.push_back(op);
@@ -87,8 +83,7 @@ static unsigned fuseProducers(ModuleOp module, IRRewriter &rewriter) {
       continue;
 
     SmallVector<LoopLikeOpInterface> nest;
-    for (Operation *parent = loop.getOperation(); parent;
-         parent = parent->getParentOp()) {
+    for (Operation *parent = loop.getOperation(); parent; parent = parent->getParentOp()) {
       if (auto loopLike = dyn_cast<LoopLikeOpInterface>(parent))
         nest.push_back(loopLike);
     }
@@ -130,8 +125,8 @@ static unsigned fuseProducers(ModuleOp module, IRRewriter &rewriter) {
       continue;
     auto ty = cast<RankedTensorType>(slice.getType());
     rewriter.setInsertionPoint(slice);
-    Value empty = tensor::EmptyOp::create(
-        rewriter, slice.getLoc(), slice.getMixedSizes(), ty.getElementType());
+    Value empty = tensor::EmptyOp::create(rewriter, slice.getLoc(), slice.getMixedSizes(),
+                                          ty.getElementType());
     rewriter.replaceOp(slice, empty);
   }
 
@@ -157,17 +152,16 @@ static unsigned fuseProducers(ModuleOp module, IRRewriter &rewriter) {
 static MemRefType scratchpadType(MemRefType source, bool workgroup) {
   if (workgroup) {
     auto space = IntegerAttr::get(IntegerType::get(source.getContext(), 64), 3);
-    return MemRefType::get(source.getShape(), source.getElementType(),
-                           MemRefLayoutAttrInterface{}, space);
+    return MemRefType::get(source.getShape(), source.getElementType(), MemRefLayoutAttrInterface{},
+                           space);
   }
   return MemRefType::get(source.getShape(), source.getElementType());
 }
 
-static Value createScratchpad(OpBuilder &builder, Location loc, MemRefType type,
-                              bool workgroup) {
+static Value createScratchpad(OpBuilder &builder, Location loc, MemRefType type, bool workgroup) {
   if (workgroup)
-    return gpu::AllocOp::create(builder, loc, type, Type(), ValueRange{},
-                                ValueRange{}, ValueRange{}, false)
+    return gpu::AllocOp::create(builder, loc, type, Type(), ValueRange{}, ValueRange{},
+                                ValueRange{}, false)
         .getMemref();
   return memref::AllocaOp::create(builder, loc, type).getResult();
 }
@@ -183,8 +177,7 @@ static StringRef operandName(Operation *op, unsigned index) {
 
 /// Promote operands of tiled linalg ops into a local scratchpad. Inputs are
 /// copied in; destination operands are also copied out after the op.
-static unsigned promoteOperands(ModuleOp module, IRRewriter &rewriter,
-                                StringRef space,
+static unsigned promoteOperands(ModuleOp module, IRRewriter &rewriter, StringRef space,
                                 ArrayRef<std::string> names) {
   bool workgroup = space == "workgroup" || space == "gpu" || space == "shared";
   unsigned promoted = 0;
@@ -206,8 +199,7 @@ static unsigned promoteOperands(ModuleOp module, IRRewriter &rewriter,
       if (!memrefTy || !memrefTy.hasStaticShape())
         continue;
       StringRef name = operandName(op.getOperation(), index);
-      if (!names.empty() &&
-          llvm::find(names, name.str()) == names.end())
+      if (!names.empty() && llvm::find(names, name.str()) == names.end())
         continue;
       candidates.emplace_back(index, operand);
     }
@@ -233,22 +225,18 @@ static unsigned promoteOperands(ModuleOp module, IRRewriter &rewriter,
       } else {
         rewriter.setInsertionPoint(op);
       }
-      Value scratch =
-          createScratchpad(rewriter, op->getLoc(), promotedTy, workgroup);
+      Value scratch = createScratchpad(rewriter, op->getLoc(), promotedTy, workgroup);
       rewriter.setInsertionPoint(op);
-      linalg::CopyOp::create(rewriter, op->getLoc(), ValueRange{original},
-                             ValueRange{scratch});
+      linalg::CopyOp::create(rewriter, op->getLoc(), ValueRange{original}, ValueRange{scratch});
       op->setOperand(index, scratch);
 
       if (initValues.contains(original)) {
         rewriter.setInsertionPointAfter(op);
-        linalg::CopyOp::create(rewriter, op->getLoc(), ValueRange{scratch},
-                               ValueRange{original});
+        linalg::CopyOp::create(rewriter, op->getLoc(), ValueRange{scratch}, ValueRange{original});
       }
       ++promoted;
-      emitTileflowRemark("tileflow promoted operand #" + llvm::Twine(index) +
-                         " to " + (workgroup ? "workgroup" : "private") +
-                         " scratchpad");
+      emitTileflowRemark("tileflow promoted operand #" + llvm::Twine(index) + " to " +
+                         (workgroup ? "workgroup" : "private") + " scratchpad");
     }
   }
   return promoted;
@@ -291,15 +279,13 @@ struct TileFlowApplySchedulePass
       if (!tileSizes.empty())
         tiles.assign(tileSizes.begin(), tileSizes.end());
       else
-        tiles.assign(schedule.getTileSizes().begin(),
-                     schedule.getTileSizes().end());
+        tiles.assign(schedule.getTileSizes().begin(), schedule.getTileSizes().end());
 
       SmallVector<int64_t> order;
       if (!loopOrder.empty())
         order.assign(loopOrder.begin(), loopOrder.end());
       else
-        order.assign(schedule.getLoopOrder().begin(),
-                     schedule.getLoopOrder().end());
+        order.assign(schedule.getLoopOrder().begin(), schedule.getLoopOrder().end());
 
       if (failed(tileOneOp(rewriter, op, tiles, order))) {
         emitTileflowRemark("tileflow-apply-schedule skipped op: not tileable");
@@ -312,8 +298,7 @@ struct TileFlowApplySchedulePass
 
     if (fuse) {
       unsigned count = fuseProducers(module, rewriter);
-      emitTileflowRemark("tileflow fused " + llvm::Twine(count) +
-                         " producer(s)");
+      emitTileflowRemark("tileflow fused " + llvm::Twine(count) + " producer(s)");
     }
 
     if (promote) {
@@ -323,8 +308,7 @@ struct TileFlowApplySchedulePass
         return;
       }
       unsigned count = promoteOperands(module, rewriter, space, promoteNames);
-      emitTileflowRemark("tileflow promoted " + llvm::Twine(count) +
-                         " operand(s)");
+      emitTileflowRemark("tileflow promoted " + llvm::Twine(count) + " operand(s)");
     }
   }
 };
@@ -355,10 +339,8 @@ struct TileFlowTileForLocalityPass
       SmallVector<int64_t> order(loopOrder.begin(), loopOrder.end());
       if (tiles.empty()) {
         if (auto schedule = getSchedule(op.getOperation())) {
-          tiles.assign(schedule.getTileSizes().begin(),
-                       schedule.getTileSizes().end());
-          order.assign(schedule.getLoopOrder().begin(),
-                       schedule.getLoopOrder().end());
+          tiles.assign(schedule.getTileSizes().begin(), schedule.getTileSizes().end());
+          order.assign(schedule.getLoopOrder().begin(), schedule.getLoopOrder().end());
         }
       }
       if (tiles.empty())
@@ -369,11 +351,8 @@ struct TileFlowTileForLocalityPass
       }
       emitTileflowRemark(
           "tileflow tiled op with [" +
-          llvm::Twine(llvm::join(llvm::map_range(tiles,
-                                                 [](int64_t v) {
-                                                   return std::to_string(v);
-                                                 }),
-                                  ", ")) +
+          llvm::Twine(llvm::join(
+              llvm::map_range(tiles, [](int64_t v) { return std::to_string(v); }), ", ")) +
           "]");
     }
     // The schedule has been consumed by this point.
@@ -392,8 +371,7 @@ struct TileFlowFuseProducersPass
   void runOnOperation() override {
     IRRewriter rewriter(&getContext());
     unsigned count = fuseProducers(getOperation(), rewriter);
-    emitTileflowRemark("tileflow fused " + llvm::Twine(count) +
-                       " producer(s) into loop nests");
+    emitTileflowRemark("tileflow fused " + llvm::Twine(count) + " producer(s) into loop nests");
   }
 };
 
@@ -418,8 +396,7 @@ struct TileFlowPromoteToScratchpadPass
 
     std::vector<std::string> selected(operands.begin(), operands.end());
     unsigned count = promoteOperands(module, rewriter, space, selected);
-    emitTileflowRemark("tileflow promoted " + llvm::Twine(count) +
-                       " operand(s)");
+    emitTileflowRemark("tileflow promoted " + llvm::Twine(count) + " operand(s)");
   }
 };
 

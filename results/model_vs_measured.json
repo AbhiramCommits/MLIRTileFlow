@@ -4,8 +4,8 @@
     512,
     512
   ],
-  "candidate_count": 4,
-  "spearman_predicted_traffic_vs_runtime": -0.2581988897471611,
+  "candidate_count": 8,
+  "spearman_predicted_traffic_vs_runtime": -0.8783100656536799,
   "model_top1": {
     "tiles": [
       512,
@@ -18,23 +18,23 @@
       2
     ],
     "predicted_dram_bytes": 3145728,
-    "median_ms": 137.92129198554903
+    "median_ms": 117.75020899949595
   },
   "best_measured": {
     "tiles": [
-      512,
-      512,
-      128
+      32,
+      32,
+      32
     ],
     "order": [
       0,
       1,
       2
     ],
-    "predicted_dram_bytes": 6291456,
-    "median_ms": 108.48091600928456
+    "predicted_dram_bytes": 50331648,
+    "median_ms": 10.433707997435704
   },
-  "top1_regret": 0.2713876049290067,
+  "top1_regret": 10.2855572561965,
   "traffic_source": "model-estimated",
   "runtime_source": "measured (perf_counter, median of 7)",
   "perf_stat_available": false,
@@ -53,13 +53,13 @@
         2
       ],
       "predicted_dram_bytes": 3145728,
-      "median_ms": 137.92129198554903
+      "median_ms": 117.75020899949595
     },
     {
       "tiles": [
-        128,
-        512,
-        512
+        256,
+        256,
+        256
       ],
       "order": [
         0,
@@ -67,26 +67,12 @@
         2
       ],
       "predicted_dram_bytes": 6291456,
-      "median_ms": 126.85029199928977
+      "median_ms": 110.07695799344219
     },
     {
       "tiles": [
-        512,
         128,
-        512
-      ],
-      "order": [
-        0,
-        1,
-        2
-      ],
-      "predicted_dram_bytes": 6291456,
-      "median_ms": 139.82004098943435
-    },
-    {
-      "tiles": [
-        512,
-        512,
+        128,
         128
       ],
       "order": [
@@ -94,8 +80,78 @@
         1,
         2
       ],
-      "predicted_dram_bytes": 6291456,
-      "median_ms": 108.48091600928456
+      "predicted_dram_bytes": 12582912,
+      "median_ms": 99.70520800561644
+    },
+    {
+      "tiles": [
+        64,
+        64,
+        64
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 25165824,
+      "median_ms": 70.08879102068022
+    },
+    {
+      "tiles": [
+        32,
+        32,
+        32
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 50331648,
+      "median_ms": 10.433707997435704
+    },
+    {
+      "tiles": [
+        64,
+        64,
+        256
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 18874368,
+      "median_ms": 104.32516600121744
+    },
+    {
+      "tiles": [
+        64,
+        256,
+        64
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 18874368,
+      "median_ms": 75.91454102657735
+    },
+    {
+      "tiles": [
+        256,
+        64,
+        64
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 18874368,
+      "median_ms": 69.72624998888932
     }
   ]
 }

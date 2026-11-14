@@ -13,9 +13,7 @@
 #define GET_ATTRDEF_CLASSES
 #include "TileFlow/Dialect/TileFlowAttrs.cpp.inc"
 
-void mlir::tileflow::TileFlowDialect::initializeAttributes() {
-  addAttributes<ScheduleAttr>();
-}
+void mlir::tileflow::TileFlowDialect::initializeAttributes() { addAttributes<ScheduleAttr>(); }
 
 using namespace mlir;
 using namespace mlir::tileflow;
@@ -24,15 +22,13 @@ using namespace mlir::tileflow;
 // Construction helpers
 //===----------------------------------------------------------------------===//
 
-ScheduleAttr ScheduleAttr::get(MLIRContext *ctx, ArrayRef<int64_t> tiles,
-                               ArrayRef<int64_t> order, int64_t unroll,
-                               ArrayRef<StringRef> promote, StringRef target) {
+ScheduleAttr ScheduleAttr::get(MLIRContext *ctx, ArrayRef<int64_t> tiles, ArrayRef<int64_t> order,
+                               int64_t unroll, ArrayRef<StringRef> promote, StringRef target) {
   SmallVector<Attribute> promoteAttrs;
   promoteAttrs.reserve(promote.size());
   for (StringRef name : promote)
     promoteAttrs.push_back(StringAttr::get(ctx, name));
-  return get(ctx, DenseI64ArrayAttr::get(ctx, tiles),
-             DenseI64ArrayAttr::get(ctx, order), unroll,
+  return get(ctx, DenseI64ArrayAttr::get(ctx, tiles), DenseI64ArrayAttr::get(ctx, order), unroll,
              ArrayAttr::get(ctx, promoteAttrs), StringAttr::get(ctx, target));
 }
 
@@ -57,8 +53,7 @@ bool ScheduleAttr::promotes(StringRef name) const {
 
 bool ScheduleAttr::isIdentity(ArrayRef<int64_t> extents) const {
   ArrayRef<int64_t> tiles = getTileSizes();
-  if (tiles.size() != extents.size() || getUnroll() != 1 ||
-      !getPromote().empty())
+  if (tiles.size() != extents.size() || getUnroll() != 1 || !getPromote().empty())
     return false;
   for (auto [tile, extent] : llvm::zip_equal(tiles, extents))
     if (tile != extent)
@@ -106,14 +101,13 @@ Attribute ScheduleAttr::parse(AsmParser &parser, Type type) {
   bool sawTiles = false, sawOrder = false;
 
   auto parseI64List = [&](SmallVectorImpl<int64_t> &out) -> ParseResult {
-    return parser.parseCommaSeparatedList(
-        AsmParser::Delimiter::Square, [&]() -> ParseResult {
-          int64_t value;
-          if (parser.parseInteger(value))
-            return failure();
-          out.push_back(value);
-          return success();
-        });
+    return parser.parseCommaSeparatedList(AsmParser::Delimiter::Square, [&]() -> ParseResult {
+      int64_t value;
+      if (parser.parseInteger(value))
+        return failure();
+      out.push_back(value);
+      return success();
+    });
   };
 
   do {
@@ -133,14 +127,13 @@ Attribute ScheduleAttr::parse(AsmParser &parser, Type type) {
       if (parser.parseInteger(unroll))
         return {};
     } else if (key == "promote") {
-      if (parser.parseCommaSeparatedList(
-              AsmParser::Delimiter::Square, [&]() -> ParseResult {
-                std::string name;
-                if (parser.parseString(&name))
-                  return failure();
-                promote.push_back(name);
-                return success();
-              }))
+      if (parser.parseCommaSeparatedList(AsmParser::Delimiter::Square, [&]() -> ParseResult {
+            std::string name;
+            if (parser.parseString(&name))
+              return failure();
+            promote.push_back(name);
+            return success();
+          }))
         return {};
     } else if (key == "target") {
       std::string value;
@@ -170,8 +163,7 @@ Attribute ScheduleAttr::parse(AsmParser &parser, Type type) {
 
   return ScheduleAttr::get(ctx, DenseI64ArrayAttr::get(ctx, tiles),
                            DenseI64ArrayAttr::get(ctx, order), unroll,
-                           ArrayAttr::get(ctx, promoteAttrs),
-                           StringAttr::get(ctx, target));
+                           ArrayAttr::get(ctx, promoteAttrs), StringAttr::get(ctx, target));
 }
 
 void ScheduleAttr::print(AsmPrinter &printer) const {
@@ -190,10 +182,9 @@ void ScheduleAttr::print(AsmPrinter &printer) const {
 // Verification
 //===----------------------------------------------------------------------===//
 
-static LogicalResult verifyScheduleImpl(
-    function_ref<InFlightDiagnostic()> emitError, DenseI64ArrayAttr tiles,
-    DenseI64ArrayAttr order, int64_t unroll, ArrayAttr promote,
-    StringAttr target) {
+static LogicalResult verifyScheduleImpl(function_ref<InFlightDiagnostic()> emitError,
+                                        DenseI64ArrayAttr tiles, DenseI64ArrayAttr order,
+                                        int64_t unroll, ArrayAttr promote, StringAttr target) {
   if (!tiles || !order || !promote || !target)
     return emitError() << "tileflow.schedule is missing a required field";
 
@@ -204,9 +195,8 @@ static LogicalResult verifyScheduleImpl(
     return emitError() << "tileflow.schedule requires at least one tile size";
 
   if (tileSizes.size() != loopOrder.size())
-    return emitError() << "tileflow.schedule 'tiles' has "
-                       << tileSizes.size() << " entries but 'order' has "
-                       << loopOrder.size()
+    return emitError() << "tileflow.schedule 'tiles' has " << tileSizes.size()
+                       << " entries but 'order' has " << loopOrder.size()
                        << "; they must match the iteration-space rank";
 
   for (auto [index, tile] : llvm::enumerate(tileSizes)) {
@@ -221,28 +211,24 @@ static LogicalResult verifyScheduleImpl(
       return emitError() << "tileflow.schedule order entry " << position
                          << " is out of range for rank " << loopOrder.size();
     if (seen.test(position))
-      return emitError() << "tileflow.schedule order is not a permutation: "
-                         << position << " appears more than once";
+      return emitError() << "tileflow.schedule order is not a permutation: " << position
+                         << " appears more than once";
     seen.set(position);
   }
 
   for (Attribute attr : promote) {
     auto name = dyn_cast<StringAttr>(attr);
     if (!name)
-      return emitError()
-             << "tileflow.schedule promote entries must be strings";
+      return emitError() << "tileflow.schedule promote entries must be strings";
     StringRef value = name.getValue();
-    if (value != "A" && value != "B" && value != "Q" && value != "K" &&
-        value != "V")
-      return emitError() << "tileflow.schedule promotes unknown operand '"
-                         << value
+    if (value != "A" && value != "B" && value != "Q" && value != "K" && value != "V")
+      return emitError() << "tileflow.schedule promotes unknown operand '" << value
                          << "'; expected a subset of {\"A\", \"B\", \"Q\", "
                             "\"K\", \"V\"}";
   }
 
   if (unroll < 1)
-    return emitError() << "tileflow.schedule unroll must be at least 1, got "
-                       << unroll;
+    return emitError() << "tileflow.schedule unroll must be at least 1, got " << unroll;
 
   StringRef targetValue = target.getValue();
   if (targetValue != "cpu" && targetValue != "gpu")
@@ -253,15 +239,13 @@ static LogicalResult verifyScheduleImpl(
   return success();
 }
 
-LogicalResult ScheduleAttr::verify(
-    function_ref<InFlightDiagnostic()> emitError, DenseI64ArrayAttr tiles,
-    DenseI64ArrayAttr order, int64_t unroll, ArrayAttr promote,
-    StringAttr target) {
+LogicalResult ScheduleAttr::verify(function_ref<InFlightDiagnostic()> emitError,
+                                   DenseI64ArrayAttr tiles, DenseI64ArrayAttr order, int64_t unroll,
+                                   ArrayAttr promote, StringAttr target) {
   return verifyScheduleImpl(emitError, tiles, order, unroll, promote, target);
 }
 
-LogicalResult ScheduleAttr::verifySchedule(
-    function_ref<InFlightDiagnostic()> emitError) const {
-  return verifyScheduleImpl(emitError, getTiles(), getOrder(), getUnroll(),
-                            getPromote(), getTarget());
+LogicalResult ScheduleAttr::verifySchedule(function_ref<InFlightDiagnostic()> emitError) const {
+  return verifyScheduleImpl(emitError, getTiles(), getOrder(), getUnroll(), getPromote(),
+                            getTarget());
 }

@@ -21,8 +21,7 @@ using namespace mlir::tileflow;
 namespace {
 
 static llvm::json::Value resultToJSON(const LocalityCostInput &input,
-                                      const LocalityCostResult &result,
-                                      ScheduleAttr schedule) {
+                                      const LocalityCostResult &result, ScheduleAttr schedule) {
   llvm::json::Object object;
   object["op"] = input.opName;
   llvm::json::Array tiles;
@@ -46,8 +45,7 @@ static llvm::json::Value resultToJSON(const LocalityCostInput &input,
   object["bytes_per_level"] = std::move(bytesPerLevel);
   object["dram_bytes"] = result.dramBytes;
   object["arithmetic_intensity"] = result.arithmeticIntensity;
-  object["average_reuse_distance_bytes"] =
-      result.averageReuseDistanceBytes;
+  object["average_reuse_distance_bytes"] = result.averageReuseDistanceBytes;
   llvm::json::Array histogram;
   for (const ReuseBucket &bucket : result.reuseHistogram) {
     llvm::json::Object entry;
@@ -63,8 +61,7 @@ static llvm::json::Value resultToJSON(const LocalityCostInput &input,
 }
 
 struct TileFlowLocalityReportPass
-    : public mlir::tileflow::impl::TileFlowLocalityReportBase<
-          TileFlowLocalityReportPass> {
+    : public mlir::tileflow::impl::TileFlowLocalityReportBase<TileFlowLocalityReportPass> {
   using Base::Base;
 
   void runOnOperation() override {
@@ -72,8 +69,7 @@ struct TileFlowLocalityReportPass
     if (!machinePath.empty()) {
       auto loaded = MachineDescription::loadFromFile(machinePath);
       if (failed(loaded)) {
-        getOperation().emitError()
-            << "cannot load machine description '" << machinePath << "'";
+        getOperation().emitError() << "cannot load machine description '" << machinePath << "'";
         signalPassFailure();
         return;
       }

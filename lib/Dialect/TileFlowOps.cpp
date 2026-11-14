@@ -45,8 +45,7 @@ SmallVector<int64_t> SoftmaxRowOp::getIterationSpaceExtents() {
 SmallVector<int64_t> AttentionOp::getIterationSpaceExtents() {
   auto qTy = cast<RankedTensorType>(getQ().getType());
   auto kTy = cast<RankedTensorType>(getK().getType());
-  return {qTy.getDimSize(0), qTy.getDimSize(1), kTy.getDimSize(1),
-          qTy.getDimSize(2)};
+  return {qTy.getDimSize(0), qTy.getDimSize(1), kTy.getDimSize(1), qTy.getDimSize(2)};
 }
 
 //===----------------------------------------------------------------------===//
@@ -62,9 +61,8 @@ ParseResult MatmulOp::parse(OpAsmParser &parser, OperationState &result) {
     return failure();
   if (parser.parseOptionalAttrDict(attrs))
     return failure();
-  if (parser.parseColonType(aTy) || parser.parseComma() ||
-      parser.parseType(bTy) || parser.parseArrow() ||
-      parser.parseType(outTy))
+  if (parser.parseColonType(aTy) || parser.parseComma() || parser.parseType(bTy) ||
+      parser.parseArrow() || parser.parseType(outTy))
     return failure();
 
   if (parser.resolveOperand(a, aTy, result.operands) ||
@@ -155,14 +153,14 @@ ParseResult AttentionOp::parse(OpAsmParser &parser, OperationState &result) {
   Type qTy, kTy, vTy, outTy;
   NamedAttrList attrs;
 
-  if (parser.parseOperand(q) || parser.parseComma() ||
-      parser.parseOperand(k) || parser.parseComma() || parser.parseOperand(v))
+  if (parser.parseOperand(q) || parser.parseComma() || parser.parseOperand(k) ||
+      parser.parseComma() || parser.parseOperand(v))
     return failure();
   if (parser.parseOptionalAttrDict(attrs))
     return failure();
-  if (parser.parseColonType(qTy) || parser.parseComma() ||
-      parser.parseType(kTy) || parser.parseComma() || parser.parseType(vTy) ||
-      parser.parseArrow() || parser.parseType(outTy))
+  if (parser.parseColonType(qTy) || parser.parseComma() || parser.parseType(kTy) ||
+      parser.parseComma() || parser.parseType(vTy) || parser.parseArrow() ||
+      parser.parseType(outTy))
     return failure();
 
   if (parser.resolveOperand(q, qTy, result.operands) ||
@@ -194,8 +192,7 @@ ParseResult AttentionOp::parse(OpAsmParser &parser, OperationState &result) {
     props.setSchedule(schedule);
   }
   for (NamedAttribute attr : attrs)
-    if (attr.getName() != "scale" && attr.getName() != "causal" &&
-        attr.getName() != "schedule")
+    if (attr.getName() != "scale" && attr.getName() != "causal" && attr.getName() != "schedule")
       result.addAttribute(attr.getName(), attr.getValue());
   return success();
 }
@@ -203,12 +200,11 @@ ParseResult AttentionOp::parse(OpAsmParser &parser, OperationState &result) {
 void AttentionOp::print(OpAsmPrinter &printer) {
   printer << ' ' << getQ() << ", " << getK() << ", " << getV();
   printer.printOptionalAttrDict((*this)->getAttrs());
-  printer << " : " << getQ().getType() << ", " << getK().getType() << ", "
-          << getV().getType() << " -> " << getOutput().getType();
+  printer << " : " << getQ().getType() << ", " << getK().getType() << ", " << getV().getType()
+          << " -> " << getOutput().getType();
 }
 
-ParseResult ScheduleRegionOp::parse(OpAsmParser &parser,
-                                    OperationState &result) {
+ParseResult ScheduleRegionOp::parse(OpAsmParser &parser, OperationState &result) {
   Attribute schedule;
   if (parser.parseAttribute(schedule))
     return failure();
@@ -247,18 +243,15 @@ LogicalResult MatmulOp::verify() {
   if (!aTy || !bTy || !outTy)
     return emitOpError() << "expects ranked tensor operands and result";
   if (aTy.getRank() != 2 || bTy.getRank() != 2 || outTy.getRank() != 2)
-    return emitOpError() << "expects rank-2 operands and result, got ranks ("
-                         << aTy.getRank() << ", " << bTy.getRank() << ", "
-                         << outTy.getRank() << ")";
-  if (!aTy.hasStaticShape() || !bTy.hasStaticShape() ||
-      !outTy.hasStaticShape())
+    return emitOpError() << "expects rank-2 operands and result, got ranks (" << aTy.getRank()
+                         << ", " << bTy.getRank() << ", " << outTy.getRank() << ")";
+  if (!aTy.hasStaticShape() || !bTy.hasStaticShape() || !outTy.hasStaticShape())
     return emitOpError() << "requires static operand and result shapes";
   if (aTy.getElementType() != bTy.getElementType() ||
       aTy.getElementType() != outTy.getElementType())
-    return emitOpError()
-           << "operands and result must have the same element type, got "
-           << aTy.getElementType() << ", " << bTy.getElementType() << ", "
-           << outTy.getElementType();
+    return emitOpError() << "operands and result must have the same element type, got "
+                         << aTy.getElementType() << ", " << bTy.getElementType() << ", "
+                         << outTy.getElementType();
 
   int64_t m = getTransposeA() ? aTy.getDimSize(1) : aTy.getDimSize(0);
   int64_t k = getTransposeA() ? aTy.getDimSize(0) : aTy.getDimSize(1);
@@ -266,8 +259,7 @@ LogicalResult MatmulOp::verify() {
   int64_t n = getTransposeB() ? bTy.getDimSize(0) : bTy.getDimSize(1);
 
   if (k != kb)
-    return emitOpError() << "K dimension mismatch: A has K=" << k
-                         << " but B has K=" << kb;
+    return emitOpError() << "K dimension mismatch: A has K=" << k << " but B has K=" << kb;
 
   if (outTy.getDimSize(0) != m || outTy.getDimSize(1) != n)
     return emitOpError() << "result shape " << formatShape(outTy.getShape())
@@ -278,8 +270,7 @@ LogicalResult MatmulOp::verify() {
       return failure();
     int64_t rank = MatmulOp::kIterationRank;
     if (static_cast<int64_t>(schedule.getTileSizes().size()) != rank)
-      return emitOpError() << "schedule has "
-                           << schedule.getTileSizes().size()
+      return emitOpError() << "schedule has " << schedule.getTileSizes().size()
                            << " tile sizes but matmul iteration space (M, N, "
                               "K) has rank "
                            << rank;
@@ -296,21 +287,17 @@ LogicalResult SoftmaxRowOp::verify() {
   if (!ty.hasStaticShape())
     return emitOpError() << "requires a static input shape";
   if (!ty.getElementType().isF32() && !ty.getElementType().isF16())
-    return emitOpError() << "expects f32 or f16 elements, got "
-                         << ty.getElementType();
+    return emitOpError() << "expects f32 or f16 elements, got " << ty.getElementType();
 
   int64_t axis = getAxisValue();
   if (axis < 0 || axis >= 2)
-    return emitOpError() << "axis must be 0 or 1 for a rank-2 input, got "
-                         << axis;
+    return emitOpError() << "axis must be 0 or 1 for a rank-2 input, got " << axis;
 
   if (auto schedule = getScheduleAttr()) {
     if (failed(schedule.verifySchedule([&]() { return emitOpError(); })))
       return failure();
-    if (static_cast<int64_t>(schedule.getTileSizes().size()) !=
-        SoftmaxRowOp::kIterationRank)
-      return emitOpError() << "schedule has "
-                           << schedule.getTileSizes().size()
+    if (static_cast<int64_t>(schedule.getTileSizes().size()) != SoftmaxRowOp::kIterationRank)
+      return emitOpError() << "schedule has " << schedule.getTileSizes().size()
                            << " tile sizes but softmax iteration space (rows, "
                               "columns) has rank "
                            << SoftmaxRowOp::kIterationRank;
@@ -325,14 +312,12 @@ LogicalResult AttentionOp::verify() {
   auto outTy = dyn_cast<RankedTensorType>(getOutput().getType());
   if (!qTy || !kTy || !vTy || !outTy)
     return emitOpError() << "expects ranked tensor operands and result";
-  if (qTy.getRank() != 3 || kTy.getRank() != 3 || vTy.getRank() != 3 ||
-      outTy.getRank() != 3)
-    return emitOpError()
-           << "expects rank-3 [heads, seq, head_dim] tensors, got ranks ("
-           << qTy.getRank() << ", " << kTy.getRank() << ", " << vTy.getRank()
-           << ", " << outTy.getRank() << ")";
-  if (!qTy.hasStaticShape() || !kTy.hasStaticShape() ||
-      !vTy.hasStaticShape() || !outTy.hasStaticShape())
+  if (qTy.getRank() != 3 || kTy.getRank() != 3 || vTy.getRank() != 3 || outTy.getRank() != 3)
+    return emitOpError() << "expects rank-3 [heads, seq, head_dim] tensors, got ranks ("
+                         << qTy.getRank() << ", " << kTy.getRank() << ", " << vTy.getRank() << ", "
+                         << outTy.getRank() << ")";
+  if (!qTy.hasStaticShape() || !kTy.hasStaticShape() || !vTy.hasStaticShape() ||
+      !outTy.hasStaticShape())
     return emitOpError() << "requires static operand and result shapes";
   if (qTy.getElementType() != kTy.getElementType() ||
       qTy.getElementType() != vTy.getElementType() ||
@@ -342,41 +327,38 @@ LogicalResult AttentionOp::verify() {
 
   int64_t heads = qTy.getDimSize(0);
   if (kTy.getDimSize(0) != heads)
-    return emitOpError() << "attention head count mismatch: Q has " << heads
-                         << " heads but K has " << kTy.getDimSize(0);
+    return emitOpError() << "attention head count mismatch: Q has " << heads << " heads but K has "
+                         << kTy.getDimSize(0);
   if (vTy.getDimSize(0) != heads)
-    return emitOpError() << "attention head count mismatch: Q has " << heads
-                         << " heads but V has " << vTy.getDimSize(0);
+    return emitOpError() << "attention head count mismatch: Q has " << heads << " heads but V has "
+                         << vTy.getDimSize(0);
 
   int64_t headDim = qTy.getDimSize(2);
   if (kTy.getDimSize(2) != headDim)
-    return emitOpError() << "attention head dimension mismatch: Q has "
-                         << headDim << " but K has " << kTy.getDimSize(2);
+    return emitOpError() << "attention head dimension mismatch: Q has " << headDim << " but K has "
+                         << kTy.getDimSize(2);
 
   int64_t seqK = kTy.getDimSize(1);
   if (vTy.getDimSize(1) != seqK)
-    return emitOpError() << "attention key sequence length mismatch: K has "
-                         << seqK << " keys but V has " << vTy.getDimSize(1);
+    return emitOpError() << "attention key sequence length mismatch: K has " << seqK
+                         << " keys but V has " << vTy.getDimSize(1);
 
   int64_t seqQ = qTy.getDimSize(1);
   if (getCausalFlag() && seqQ != seqK)
-    return emitOpError() << "causal attention requires seq_q == seq_k, got seq_q="
-                         << seqQ << " and seq_k=" << seqK;
+    return emitOpError() << "causal attention requires seq_q == seq_k, got seq_q=" << seqQ
+                         << " and seq_k=" << seqK;
 
   if (outTy.getDimSize(0) != heads || outTy.getDimSize(1) != seqQ ||
       outTy.getDimSize(2) != vTy.getDimSize(2))
     return emitOpError() << "result shape " << formatShape(outTy.getShape())
-                         << " does not match [heads=" << heads
-                         << ", seq_q=" << seqQ
+                         << " does not match [heads=" << heads << ", seq_q=" << seqQ
                          << ", v_dim=" << vTy.getDimSize(2) << "]";
 
   if (auto schedule = getScheduleAttr()) {
     if (failed(schedule.verifySchedule([&]() { return emitOpError(); })))
       return failure();
-    if (static_cast<int64_t>(schedule.getTileSizes().size()) !=
-        AttentionOp::kIterationRank)
-      return emitOpError() << "schedule has "
-                           << schedule.getTileSizes().size()
+    if (static_cast<int64_t>(schedule.getTileSizes().size()) != AttentionOp::kIterationRank)
+      return emitOpError() << "schedule has " << schedule.getTileSizes().size()
                            << " tile sizes but attention iteration space "
                               "(heads, seq_q, seq_k, head_dim) has rank "
                            << AttentionOp::kIterationRank;
@@ -397,23 +379,19 @@ LogicalResult ScheduleRegionOp::verify() {
   if (!yield)
     return emitOpError() << "body must end with tileflow.yield";
   if (yield.getValues().size() != getNumResults())
-    return emitOpError() << "yields " << yield.getValues().size()
-                         << " values but the region has " << getNumResults()
-                         << " results";
+    return emitOpError() << "yields " << yield.getValues().size() << " values but the region has "
+                         << getNumResults() << " results";
 
   int64_t rank = -1;
-  for (auto [index, pair] : llvm::enumerate(
-           llvm::zip_equal(yield.getValues(), getResults()))) {
+  for (auto [index, pair] : llvm::enumerate(llvm::zip_equal(yield.getValues(), getResults()))) {
     Value yielded = std::get<0>(pair);
     Value result = std::get<1>(pair);
     if (yielded.getType() != result.getType())
-      return emitOpError() << "yielded value #" << index << " has type "
-                           << yielded.getType() << " but result #" << index
-                           << " has type " << result.getType();
+      return emitOpError() << "yielded value #" << index << " has type " << yielded.getType()
+                           << " but result #" << index << " has type " << result.getType();
     auto ty = dyn_cast<RankedTensorType>(result.getType());
     if (!ty)
-      return emitOpError() << "result #" << index
-                           << " must be a ranked tensor";
+      return emitOpError() << "result #" << index << " must be a ranked tensor";
     if (rank == -1)
       rank = ty.getRank();
     else if (rank != ty.getRank())
@@ -423,10 +401,8 @@ LogicalResult ScheduleRegionOp::verify() {
   if (failed(getSchedule().verifySchedule([&]() { return emitOpError(); })))
     return failure();
   if (static_cast<int64_t>(getSchedule().getTileSizes().size()) != rank)
-    return emitOpError() << "schedule has "
-                         << getSchedule().getTileSizes().size()
-                         << " tile sizes but the region results have rank "
-                         << rank;
+    return emitOpError() << "schedule has " << getSchedule().getTileSizes().size()
+                         << " tile sizes but the region results have rank " << rank;
   return success();
 }
 
@@ -456,12 +432,10 @@ struct FoldTransposeIntoMatmul : public OpRewritePattern<MatmulOp> {
     if (!transpose)
       return false;
     ArrayRef<int64_t> permutation = transpose.getPermutation();
-    return permutation.size() == 2 && permutation[0] == 1 &&
-           permutation[1] == 0;
+    return permutation.size() == 2 && permutation[0] == 1 && permutation[1] == 0;
   }
 
-  LogicalResult matchAndRewrite(MatmulOp op,
-                                PatternRewriter &rewriter) const override {
+  LogicalResult matchAndRewrite(MatmulOp op, PatternRewriter &rewriter) const override {
     bool changed = false;
     Value a = op.getA();
     Value b = op.getB();
@@ -504,13 +478,11 @@ private:
 struct FoldZeroDimMatmul : public OpRewritePattern<MatmulOp> {
   using OpRewritePattern::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(MatmulOp op,
-                                PatternRewriter &rewriter) const override {
+  LogicalResult matchAndRewrite(MatmulOp op, PatternRewriter &rewriter) const override {
     auto outTy = op.getOutput().getType();
     if (outTy.getNumElements() != 0)
       return failure();
-    rewriter.replaceOpWithNewOp<tensor::EmptyOp>(
-        op, outTy.getShape(), outTy.getElementType());
+    rewriter.replaceOpWithNewOp<tensor::EmptyOp>(op, outTy.getShape(), outTy.getElementType());
     return success();
   }
 };
@@ -520,8 +492,7 @@ struct FoldZeroDimMatmul : public OpRewritePattern<MatmulOp> {
 struct CanonicalizeAttentionScale : public OpRewritePattern<AttentionOp> {
   using OpRewritePattern::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(AttentionOp op,
-                                PatternRewriter &rewriter) const override {
+  LogicalResult matchAndRewrite(AttentionOp op, PatternRewriter &rewriter) const override {
     auto scale = op.getScaleAttr();
     if (!scale || scale.getValueAsDouble() != 1.0)
       return failure();
@@ -532,16 +503,13 @@ struct CanonicalizeAttentionScale : public OpRewritePattern<AttentionOp> {
 
 /// Remove a schedule_region whose schedule is the identity by inlining its
 /// body into the parent block.
-struct InlineIdentityScheduleRegion
-    : public OpRewritePattern<ScheduleRegionOp> {
+struct InlineIdentityScheduleRegion : public OpRewritePattern<ScheduleRegionOp> {
   using OpRewritePattern::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(ScheduleRegionOp op,
-                                PatternRewriter &rewriter) const override {
+  LogicalResult matchAndRewrite(ScheduleRegionOp op, PatternRewriter &rewriter) const override {
     for (Value result : op.getResults()) {
       auto ty = dyn_cast<RankedTensorType>(result.getType());
-      if (!ty || !ty.hasStaticShape() ||
-          !op.getSchedule().isIdentity(ty.getShape()))
+      if (!ty || !ty.hasStaticShape() || !op.getSchedule().isIdentity(ty.getShape()))
         return failure();
     }
 
@@ -557,12 +525,10 @@ struct InlineIdentityScheduleRegion
 
 /// Collapse a nested schedule_region by composing the two schedules and
 /// inlining the inner body.
-struct CollapseNestedScheduleRegions
-    : public OpRewritePattern<ScheduleRegionOp> {
+struct CollapseNestedScheduleRegions : public OpRewritePattern<ScheduleRegionOp> {
   using OpRewritePattern::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(ScheduleRegionOp outer,
-                                PatternRewriter &rewriter) const override {
+  LogicalResult matchAndRewrite(ScheduleRegionOp outer, PatternRewriter &rewriter) const override {
     Block &outerBody = outer.getBody().front();
     ScheduleRegionOp inner;
     for (Operation &candidate : outerBody) {
@@ -573,8 +539,7 @@ struct CollapseNestedScheduleRegions
     if (!inner)
       return failure();
 
-    ScheduleAttr merged =
-        ScheduleAttr::merge(outer.getSchedule(), inner.getSchedule());
+    ScheduleAttr merged = ScheduleAttr::merge(outer.getSchedule(), inner.getSchedule());
     if (!merged)
       return failure();
 
@@ -591,18 +556,15 @@ struct CollapseNestedScheduleRegions
 
 } // namespace
 
-void MatmulOp::getCanonicalizationPatterns(RewritePatternSet &results,
-                                           MLIRContext *context) {
+void MatmulOp::getCanonicalizationPatterns(RewritePatternSet &results, MLIRContext *context) {
   results.add<FoldTransposeIntoMatmul, FoldZeroDimMatmul>(context);
 }
 
-void AttentionOp::getCanonicalizationPatterns(RewritePatternSet &results,
-                                              MLIRContext *context) {
+void AttentionOp::getCanonicalizationPatterns(RewritePatternSet &results, MLIRContext *context) {
   results.add<CanonicalizeAttentionScale>(context);
 }
 
 void ScheduleRegionOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                                    MLIRContext *context) {
-  results.add<InlineIdentityScheduleRegion, CollapseNestedScheduleRegions>(
-      context);
+  results.add<InlineIdentityScheduleRegion, CollapseNestedScheduleRegions>(context);
 }

@@ -1,0 +1,19 @@
+ProductName:		macOS
+ProductVersion:		27.2.1
+BuildVersion:		26B131
+
+Apple M3
+8
+17179869184
+128
+65536
+4194304
+
+    Hardware Overview:
+
+      Model Name: MacBook Air
+      Model Identifier: Mac15,12
+      Model Number: MXCV3LL/A
+      Chip: Apple M3
+      Total Number of Cores: 8 (4 Performance and 4 Efficiency)
+      Memory: 16 GB

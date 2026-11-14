@@ -205,7 +205,7 @@ def model_vs_measured() -> dict:
             "--log",
             str(log_path),
             "--top",
-            "20",
+            "200",
         ],
         check=True,
         capture_output=True,
@@ -213,18 +213,23 @@ def model_vs_measured() -> dict:
     )
     ranking = json.loads(json_path.read_text())
 
-    candidates = []
-    seen = set()
-    for entry in ranking["ranking"]:
-        key = tuple(entry["tiles"])
-        if key in seen:
-            continue
-        seen.add(key)
-        candidates.append(entry)
-        if len(candidates) >= 8:
-            break
-    if tuple(ranking["winner"]["tiles"]) not in seen:
-        candidates.insert(0, {**ranking["winner"], "rank": 0})
+    # A curated candidate set spanning no tiling through small tiles, so the
+    # comparison covers a real traffic range instead of permutations that all
+    # predict the same number.
+    curated = [
+        [512, 512, 512],
+        [256, 256, 256],
+        [128, 128, 128],
+        [64, 64, 64],
+        [32, 32, 32],
+        [64, 64, 256],
+        [64, 256, 64],
+        [256, 64, 64],
+    ]
+    candidates = [
+        {"tiles": tiles, "order": [0, 1, 2], "rank": index + 1}
+        for index, tiles in enumerate(curated)
+    ]
 
     a = np.random.default_rng(10).standard_normal((m, k), dtype=np.float32) * 0.25
     b = np.random.default_rng(11).standard_normal((k, n), dtype=np.float32) * 0.25
