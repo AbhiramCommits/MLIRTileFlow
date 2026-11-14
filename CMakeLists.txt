@@ -62,9 +62,57 @@ if(NOT MSVC)
   add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 endif()
 
+# Link the MLIR component archives directly. Homebrew's monolithic libMLIR
+# does not export the full MLIR API, and mixing the dylib with the component
+# archives duplicates MLIR's TypeID state, which breaks type interfaces at
+# runtime. Linking only the component archives keeps a single copy of every
+# TypeID in the final executable on both Homebrew and apt.llvm.org installs.
+get_property(TILEFLOW_DIALECT_LIBS GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+get_property(TILEFLOW_CONVERSION_LIBS GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+
+if(MLIR_LINK_MLIR_DYLIB)
+  foreach(component MLIRMlirOptMain MLIROptLib MLIRParser)
+    find_library(TILEFLOW_${component}_LIB NAMES ${component}
+      PATHS "${MLIR_INSTALL_PREFIX}/lib" NO_DEFAULT_PATH)
+    if(NOT TILEFLOW_${component}_LIB)
+      message(FATAL_ERROR "${component} archive not found in ${MLIR_INSTALL_PREFIX}/lib")
+    endif()
+  endforeach()
+  set(TILEFLOW_MLIR_TOOL_LIBS
+    ${TILEFLOW_MLIRMlirOptMain_LIB}
+    ${TILEFLOW_MLIROptLib_LIB}
+    MLIRPluginsLib
+    MLIRBytecodeWriter
+    MLIRBytecodeReader
+    MLIRRemarkStreamer
+    MLIRDebug
+    MLIRObservers
+    MLIRRegisterAllDialects
+    MLIRRegisterAllPasses
+    ${TILEFLOW_DIALECT_LIBS}
+    ${TILEFLOW_CONVERSION_LIBS}
+    ${TILEFLOW_MLIRParser_LIB})
+else()
+  set(TILEFLOW_MLIR_TOOL_LIBS
+    MLIRMlirOptMain
+    MLIROptLib
+    MLIRPluginsLib
+    MLIRBytecodeWriter
+    MLIRBytecodeReader
+    MLIRRemarkStreamer
+    MLIRDebug
+    MLIRObservers
+    MLIRRegisterAllDialects
+    MLIRRegisterAllPasses
+    ${TILEFLOW_DIALECT_LIBS}
+    ${TILEFLOW_CONVERSION_LIBS}
+    MLIRParser)
+endif()
+
 add_subdirectory(include/TileFlow)
 add_subdirectory(lib)
 add_subdirectory(tools)
 add_subdirectory(test)
 
 enable_testing()
+

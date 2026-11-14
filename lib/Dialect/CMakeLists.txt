@@ -1,6 +1,7 @@
 add_mlir_dialect_library(TileFlowDialect
   TileFlowDialect.cpp
-  ${PROJECT_SOURCE_DIR}/include/TileFlow/Dialect/TileFlowDialect.h
+  TileFlowAttrs.cpp
+  TileFlowOps.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${PROJECT_SOURCE_DIR}/include/TileFlow/Dialect
@@ -11,4 +12,7 @@ add_mlir_dialect_library(TileFlowDialect
   LINK_LIBS PUBLIC
   MLIRIR
   MLIRSupport
+  MLIRBytecodeOpInterface
+  MLIRLinalgDialect
+  MLIRTensorDialect
   )

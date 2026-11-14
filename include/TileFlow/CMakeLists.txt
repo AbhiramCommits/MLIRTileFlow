@@ -1,5 +1,7 @@
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Dialect)
 
+set(LLVM_TABLEGEN_FLAGS -I${CMAKE_CURRENT_SOURCE_DIR}/Dialect)
+
 set(LLVM_TARGET_DEFINITIONS Dialect/TileFlowOps.td)
 mlir_tablegen(Dialect/TileFlowOps.h.inc -gen-op-decls)
 mlir_tablegen(Dialect/TileFlowOps.cpp.inc -gen-op-defs)
@@ -7,4 +9,8 @@ mlir_tablegen(Dialect/TileFlowOpsDialect.h.inc -gen-dialect-decls
   -dialect=tileflow)
 mlir_tablegen(Dialect/TileFlowOpsDialect.cpp.inc -gen-dialect-defs
   -dialect=tileflow)
+mlir_tablegen(Dialect/TileFlowAttrs.h.inc -gen-attrdef-decls
+  -attrdefs-dialect=tileflow)
+mlir_tablegen(Dialect/TileFlowAttrs.cpp.inc -gen-attrdef-defs
+  -attrdefs-dialect=tileflow)
 add_public_tablegen_target(TileFlowOpsIncGen)
