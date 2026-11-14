@@ -1,0 +1,8 @@
+MLIR_DIR=/opt/homebrew/opt/llvm/lib/cmake/mlir
+LLVM_PREFIX=/opt/homebrew/opt/llvm
+LLVM_VERSION=23.1.1
+MLIR_TABLEGEN=/opt/homebrew/opt/llvm/bin/mlir-tblgen
+MLIR_OPT=/opt/homebrew/opt/llvm/bin/mlir-opt
+MLIR_TRANSLATE=/opt/homebrew/opt/llvm/bin/mlir-translate
+LLVM_CONFIG=/opt/homebrew/opt/llvm/bin/llvm-config
+LIT=/Users/abhiramkasireddi/MLIRTileFlow/.venv/bin/lit

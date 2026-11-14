@@ -1,0 +1,12 @@
+build/
+build-*/
+__pycache__/
+*.pyc
+.venv/
+*.so
+*.o
+*.ll
+.DS_Store
+results/raw/
+.cache/
+compile_commands.json

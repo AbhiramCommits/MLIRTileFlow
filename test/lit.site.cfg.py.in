@@ -1,0 +1,9 @@
+import os
+
+config.tileflow_binary_dir = "@TILEFLOW_BINARY_DIR@"
+config.tileflow_tools_dir = "@TILEFLOW_TOOLS_DIR@"
+config.llvm_tools_dir = "@LLVM_TOOLS_BINARY_DIR@"
+
+lit_config.load_config(
+    config, os.path.join("@TILEFLOW_SOURCE_DIR@", "test", "lit.cfg.py")
+)
