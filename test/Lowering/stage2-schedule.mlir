@@ -5,11 +5,12 @@
 
 // CHECK-LABEL: func.func @matmul
 // CHECK-DAG: memref<64x64xf32>
+// CHECK: memref.alloca() : memref<16x16xf32>
+// CHECK: memref.alloca() : memref<16x16xf32>
 // CHECK: scf.for
 // CHECK: scf.for
 // CHECK: scf.for
 // CHECK: memref.subview
-// CHECK: memref.alloca() : memref<16x16xf32>
 // CHECK: linalg.copy
 // CHECK: linalg.copy
 // CHECK: linalg.matmul

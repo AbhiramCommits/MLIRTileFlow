@@ -36,6 +36,7 @@ add_mlir_library(TileFlowTransforms
   MLIRIndexToLLVM
   MLIRControlFlowToLLVM
   MLIRReconcileUnrealizedCasts
+  MLIRUBToLLVM
   MLIRAffineToStandard
   MLIRSCFToGPU
   MLIRGPUToNVVMTransforms

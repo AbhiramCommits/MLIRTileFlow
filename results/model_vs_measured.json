@@ -1,0 +1,101 @@
+{
+  "shape": [
+    512,
+    512,
+    512
+  ],
+  "candidate_count": 4,
+  "spearman_predicted_traffic_vs_runtime": -0.2581988897471611,
+  "model_top1": {
+    "tiles": [
+      512,
+      512,
+      512
+    ],
+    "order": [
+      0,
+      1,
+      2
+    ],
+    "predicted_dram_bytes": 3145728,
+    "median_ms": 137.92129198554903
+  },
+  "best_measured": {
+    "tiles": [
+      512,
+      512,
+      128
+    ],
+    "order": [
+      0,
+      1,
+      2
+    ],
+    "predicted_dram_bytes": 6291456,
+    "median_ms": 108.48091600928456
+  },
+  "top1_regret": 0.2713876049290067,
+  "traffic_source": "model-estimated",
+  "runtime_source": "measured (perf_counter, median of 7)",
+  "perf_stat_available": false,
+  "llc_misses_measured": false,
+  "note": "perf stat with cache/DRAM counters is not available on this machine; traffic figures are model estimates and only runtime is measured.",
+  "candidates": [
+    {
+      "tiles": [
+        512,
+        512,
+        512
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 3145728,
+      "median_ms": 137.92129198554903
+    },
+    {
+      "tiles": [
+        128,
+        512,
+        512
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 6291456,
+      "median_ms": 126.85029199928977
+    },
+    {
+      "tiles": [
+        512,
+        128,
+        512
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 6291456,
+      "median_ms": 139.82004098943435
+    },
+    {
+      "tiles": [
+        512,
+        512,
+        128
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ],
+      "predicted_dram_bytes": 6291456,
+      "median_ms": 108.48091600928456
+    }
+  ]
+}

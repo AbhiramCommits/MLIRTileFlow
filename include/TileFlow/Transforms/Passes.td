@@ -102,7 +102,8 @@ def TileFlowToLLVM : Pass<"tileflow-to-llvm", "::mlir::ModuleOp"> {
   let dependentDialects = [
     "::mlir::LLVM::LLVMDialect",
     "::mlir::cf::ControlFlowDialect",
-    "::mlir::func::FuncDialect"
+    "::mlir::func::FuncDialect",
+    "::mlir::ub::UBDialect"
   ];
 }
 

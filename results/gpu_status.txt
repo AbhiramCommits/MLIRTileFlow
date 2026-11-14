@@ -1,0 +1,2 @@
+GPU execution was not available on this machine: torch.cuda.is_available() is false (no CUDA device).
+The -tileflow-lower-to-gpu path was still validated by the lit/FileCheck test test/Lowering/gpu-lowering.mlir, which lowers matmul through scf.forall -> gpu.launch -> gpu.module with NVVM ops.

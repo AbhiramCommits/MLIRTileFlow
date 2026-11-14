@@ -36,6 +36,12 @@ static Value createScalar(OpBuilder &builder, Location loc, Type elementType,
                                    builder.getFloatAttr(elementType, value));
 }
 
+/// A large finite negative value usable as "-infinity" without emitting the
+/// `float -inf` literal that some LLVM IR parsers reject.
+static double negativeSentinel(Type elementType) {
+  return elementType.isF16() ? -60000.0 : -1.0e30;
+}
+
 static Value createFilled(OpBuilder &builder, Location loc,
                           RankedTensorType type, Value scalar) {
   Value empty = createEmpty(builder, loc, type);
@@ -90,7 +96,7 @@ static Value buildSoftmaxLastAxis(OpBuilder &builder, Location loc,
   Value maxInit =
       createFilled(builder, loc, reduceTy,
                    createScalar(builder, loc, elementType,
-                                -std::numeric_limits<double>::infinity()));
+                                negativeSentinel(elementType)));
   auto maxOp = linalg::GenericOp::create(
       builder, loc, TypeRange{reduceTy}, ValueRange{input},
       ValueRange{maxInit}, ArrayRef<AffineMap>{identity, reduceMap},
@@ -162,9 +168,12 @@ static Value buildTranspose(OpBuilder &builder, Location loc, Value input,
 
 static Value buildMatmul(OpBuilder &builder, Location loc, Value a, Value b,
                          RankedTensorType resultTy) {
-  Value empty = createEmpty(builder, loc, resultTy);
+  // A matmul accumulates into its destination, so the destination must be
+  // zero-initialized rather than undefined (tensor.empty).
+  Value zero = createScalar(builder, loc, resultTy.getElementType(), 0.0);
+  Value init = createFilled(builder, loc, resultTy, zero);
   return linalg::MatmulOp::create(builder, loc, TypeRange{resultTy},
-                                  ValueRange{a, b}, ValueRange{empty})
+                                  ValueRange{a, b}, ValueRange{init})
       .getResults().front();
 }
 
@@ -201,7 +210,8 @@ static Value lowerAttention(OpBuilder &builder, Location loc, AttentionOp op) {
   // QK^T: [H, Sq, Sk]; linalg.batch_matmul iterates [batch, M, N, K].
   auto scoresTy =
       RankedTensorType::get({heads, seqQ, seqK}, elementType);
-  Value scoresEmpty = createEmpty(builder, loc, scoresTy);
+  Value scoresZero = createScalar(builder, loc, elementType, 0.0);
+  Value scoresEmpty = createFilled(builder, loc, scoresTy, scoresZero);
   auto qk = linalg::BatchMatmulOp::create(
       builder, loc, TypeRange{scoresTy}, ValueRange{op.getQ(), kTransposed},
       ValueRange{scoresEmpty});
@@ -232,7 +242,7 @@ static Value lowerAttention(OpBuilder &builder, Location loc, AttentionOp op) {
   if (op.getCausalFlag()) {
     Value negInf =
         createScalar(builder, loc, elementType,
-                     -std::numeric_limits<double>::infinity());
+                     negativeSentinel(elementType));
     Value maskedEmpty = createEmpty(builder, loc, scoresTy);
     auto maskOp = linalg::GenericOp::create(
         builder, loc, TypeRange{scoresTy}, ValueRange{scores},
@@ -259,7 +269,8 @@ static Value lowerAttention(OpBuilder &builder, Location loc, AttentionOp op) {
   // batch matmul is [batch, M, N, K] = [H, Sq, Dv, Sk].
   auto resultTy =
       RankedTensorType::get({heads, seqQ, valueDim}, elementType);
-  Value resultEmpty = createEmpty(builder, loc, resultTy);
+  Value resultZero = createScalar(builder, loc, elementType, 0.0);
+  Value resultEmpty = createFilled(builder, loc, resultTy, resultZero);
   auto pv = linalg::BatchMatmulOp::create(
       builder, loc, TypeRange{resultTy}, ValueRange{scores, op.getV()},
       ValueRange{resultEmpty});

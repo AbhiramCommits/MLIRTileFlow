@@ -105,6 +105,11 @@ static bool better(const Candidate &a, const Candidate &b) {
     return a.result.feasible;
   if (a.result.dramBytes != b.result.dramBytes)
     return a.result.dramBytes < b.result.dramBytes;
+  // Break DRAM ties by innermost-level traffic: a schedule that keeps the
+  // working set in L1 moves less data even when DRAM traffic is equal.
+  if (!a.result.bytesPerLevel.empty() && !b.result.bytesPerLevel.empty() &&
+      a.result.bytesPerLevel.front() != b.result.bytesPerLevel.front())
+    return a.result.bytesPerLevel.front() < b.result.bytesPerLevel.front();
   return a.result.arithmeticIntensity > b.result.arithmeticIntensity;
 }
 
@@ -303,7 +308,9 @@ int main(int argc, char **argv) {
       return;
     }
     for (int64_t choice : choices) {
-      tiles[depth] = choice;
+      // Do not tile a dimension by more than its extent: a larger tile only
+      // creates dynamic boundary shapes.
+      tiles[depth] = std::min(choice, input->extents[depth]);
       enumerate(depth + 1);
     }
   };

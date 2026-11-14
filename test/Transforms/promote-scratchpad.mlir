@@ -8,8 +8,9 @@
 
 // CPU-LABEL: func.func @matmul
 // CPU: memref.alloca() : memref<16x16xf32>
-// CPU: linalg.copy
 // CPU: memref.alloca() : memref<16x16xf32>
+// CPU: scf.for
+// CPU: linalg.copy
 // CPU: linalg.copy
 // CPU: linalg.matmul
 // CPU-SAME: memref<16x16xf32>, memref<16x16xf32>
@@ -17,8 +18,9 @@
 
 // GPU-LABEL: func.func @matmul
 // GPU: gpu.alloc  () : memref<16x16xf32, 3>
-// GPU: linalg.copy
 // GPU: gpu.alloc  () : memref<16x16xf32, 3>
+// GPU: scf.for
+// GPU: linalg.copy
 // GPU: linalg.copy
 // GPU: linalg.matmul
 func.func @matmul(%a: tensor<64x64xf32>, %b: tensor<64x64xf32>)

@@ -1,0 +1,197 @@
+{
+  "tolerance": {
+    "atol": 0.002,
+    "rtol": 0.002
+  },
+  "cases": [
+    {
+      "case": "attention_seq128",
+      "variant": "tiled_fused",
+      "max_abs_error": 1.1920928955078125e-07,
+      "max_rel_error": 0.0008197687566280365,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq128",
+      "variant": "tiled_fused_promoted_vectorized",
+      "max_abs_error": 1.1920928955078125e-07,
+      "max_rel_error": 0.0008197687566280365,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq128",
+      "variant": "untiled",
+      "max_abs_error": 1.1920928955078125e-07,
+      "max_rel_error": 0.0008197687566280365,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq128_causal",
+      "variant": "tiled_fused",
+      "max_abs_error": 1.7881393432617188e-07,
+      "max_rel_error": 0.002084949053823948,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq128_causal",
+      "variant": "tiled_fused_promoted_vectorized",
+      "max_abs_error": 1.7881393432617188e-07,
+      "max_rel_error": 0.002084949053823948,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq128_causal",
+      "variant": "untiled",
+      "max_abs_error": 1.7881393432617188e-07,
+      "max_rel_error": 0.002084949053823948,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq512",
+      "variant": "tiled_fused",
+      "max_abs_error": 9.406358003616333e-08,
+      "max_rel_error": 0.008313973434269428,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq512",
+      "variant": "tiled_fused_promoted_vectorized",
+      "max_abs_error": 9.406358003616333e-08,
+      "max_rel_error": 0.008313973434269428,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq512",
+      "variant": "untiled",
+      "max_abs_error": 9.406358003616333e-08,
+      "max_rel_error": 0.008313973434269428,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq512_causal",
+      "variant": "tiled_fused",
+      "max_abs_error": 1.1920928955078125e-07,
+      "max_rel_error": 0.002270418917760253,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq512_causal",
+      "variant": "tiled_fused_promoted_vectorized",
+      "max_abs_error": 1.1920928955078125e-07,
+      "max_rel_error": 0.002270418917760253,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "attention_seq512_causal",
+      "variant": "untiled",
+      "max_abs_error": 1.1920928955078125e-07,
+      "max_rel_error": 0.002270418917760253,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_1024",
+      "variant": "tiled_fused",
+      "max_abs_error": 3.337860107421875e-06,
+      "max_rel_error": 0.055375490337610245,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_1024",
+      "variant": "tiled_fused_promoted_vectorized",
+      "max_abs_error": 3.337860107421875e-06,
+      "max_rel_error": 0.055375490337610245,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_1024",
+      "variant": "untiled",
+      "max_abs_error": 3.337860107421875e-06,
+      "max_rel_error": 0.055375490337610245,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_256",
+      "variant": "tiled_fused",
+      "max_abs_error": 1.430511474609375e-06,
+      "max_rel_error": 0.006918396335095167,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_256",
+      "variant": "tiled_fused_promoted_vectorized",
+      "max_abs_error": 1.430511474609375e-06,
+      "max_rel_error": 0.006918396335095167,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_256",
+      "variant": "untiled",
+      "max_abs_error": 1.430511474609375e-06,
+      "max_rel_error": 0.006918396335095167,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_nondivisible",
+      "variant": "tiled_fused",
+      "max_abs_error": 7.152557373046875e-07,
+      "max_rel_error": 0.004361501894891262,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_nondivisible",
+      "variant": "tiled_fused_promoted_vectorized",
+      "max_abs_error": 7.152557373046875e-07,
+      "max_rel_error": 0.004361501894891262,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    },
+    {
+      "case": "matmul_nondivisible",
+      "variant": "untiled",
+      "max_abs_error": 7.152557373046875e-07,
+      "max_rel_error": 0.004361501894891262,
+      "atol": 0.002,
+      "rtol": 0.002,
+      "passed": true
+    }
+  ]
+}

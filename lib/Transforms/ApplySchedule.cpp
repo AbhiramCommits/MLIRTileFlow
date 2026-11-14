@@ -13,6 +13,7 @@
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/PatternMatch.h"
+#include "mlir/Interfaces/FunctionInterfaces.h"
 #include "mlir/Pass/Pass.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -129,8 +130,8 @@ static unsigned fuseProducers(ModuleOp module, IRRewriter &rewriter) {
       continue;
     auto ty = cast<RankedTensorType>(slice.getType());
     rewriter.setInsertionPoint(slice);
-    Value empty = tensor::EmptyOp::create(rewriter, slice.getLoc(),
-                                          ty.getShape(), ty.getElementType());
+    Value empty = tensor::EmptyOp::create(
+        rewriter, slice.getLoc(), slice.getMixedSizes(), ty.getElementType());
     rewriter.replaceOp(slice, empty);
   }
 
@@ -221,9 +222,20 @@ static unsigned promoteOperands(ModuleOp module, IRRewriter &rewriter,
       auto memrefTy = cast<MemRefType>(subview.getType());
       MemRefType promotedTy = scratchpadType(memrefTy, workgroup);
 
-      rewriter.setInsertionPoint(op);
+      // Hoist the scratchpad to function entry: allocating inside the tile
+      // loop would grow the stack on every iteration.
+      Operation *function = op->getParentOp();
+      while (function && !isa<FunctionOpInterface>(function))
+        function = function->getParentOp();
+      if (function) {
+        auto &body = cast<FunctionOpInterface>(function).getFunctionBody();
+        rewriter.setInsertionPointToStart(&body.front());
+      } else {
+        rewriter.setInsertionPoint(op);
+      }
       Value scratch =
           createScratchpad(rewriter, op->getLoc(), promotedTy, workgroup);
+      rewriter.setInsertionPoint(op);
       linalg::CopyOp::create(rewriter, op->getLoc(), ValueRange{original},
                              ValueRange{scratch});
       op->setOperand(index, scratch);

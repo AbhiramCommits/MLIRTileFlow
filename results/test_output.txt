@@ -1,0 +1,9 @@
+Test project /Users/abhiramkasireddi/MLIRTileFlow/build
+    Start 1: check-tileflow
+1/2 Test #1: check-tileflow ...................   Passed    2.17 sec
+    Start 2: pytest-tileflow
+2/2 Test #2: pytest-tileflow ..................   Passed   10.28 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =  12.45 sec

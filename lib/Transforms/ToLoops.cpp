@@ -67,6 +67,28 @@ struct TileFlowToLoopsPass
       for (linalg::LinalgOp op : ops) {
         if (!op->getBlock())
           continue;
+        // Vectorize elementwise generics only: full matmul vectorization
+        // produces multi-dimensional reductions that the LLVM lowering does
+        // not handle for these tile sizes.
+        auto generic = dyn_cast<linalg::GenericOp>(op.getOperation());
+        if (!generic)
+          continue;
+        if (llvm::any_of(generic.getIteratorTypesArray(), [](auto kind) {
+              return kind != utils::IteratorType::parallel;
+            }))
+          continue;
+        if (generic.hasIndexSemantics())
+          continue;
+        int64_t elements = 1;
+        for (Type operandType : generic->getOperandTypes())
+          if (auto shaped = dyn_cast<ShapedType>(operandType)) {
+            if (!shaped.hasStaticShape())
+              elements = -1;
+            else if (elements >= 0)
+              elements *= shaped.getNumElements();
+          }
+        if (elements < 0 || elements > 1024)
+          continue;
         FailureOr<linalg::VectorizationResult> result =
             linalg::vectorize(rewriter, op.getOperation());
         if (failed(result))

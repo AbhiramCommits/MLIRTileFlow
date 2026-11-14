@@ -116,3 +116,12 @@ add_subdirectory(test)
 
 enable_testing()
 
+# The full suite is driven by ctest: lit for the compiler tests and pytest for
+# the numerical validation.
+add_test(NAME check-tileflow
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target check-tileflow)
+add_test(NAME pytest-tileflow
+  COMMAND ${Python3_EXECUTABLE} -m pytest ${PROJECT_SOURCE_DIR}/python -q)
+set_tests_properties(pytest-tileflow PROPERTIES
+  ENVIRONMENT "TILEFLOW_OPT=$<TARGET_FILE:tileflow-opt>;TILEFLOW_TUNE=$<TARGET_FILE:tileflow-tune>;TILEFLOW_REPO=${PROJECT_SOURCE_DIR}")
+
