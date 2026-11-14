@@ -1,0 +1,13 @@
+tileflow-tune log
+machine: Apple M3 (MacBook Air, arm64)
+op: tileflow.matmul
+candidates enumerated: 2592
+candidates ranked by cost model: 2592
+candidates feasible after scratchpad check: 2064
+candidates needing compilation under brute force: 2592
+winner tiles: [128, 128, 1024]
+winner order: [0, 1, 2]
+winner promote: []
+winner estimated DRAM bytes: 71303168
+winner arithmetic intensity: 3.011765e+01
+winner average reuse distance bytes: 3.713707e+06

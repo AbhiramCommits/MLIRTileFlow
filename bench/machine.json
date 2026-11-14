@@ -1,0 +1,24 @@
+{
+  "name": "Apple M3 (MacBook Air, arm64)",
+  "cpu": "Apple M3 (8 cores: 4 performance, 4 efficiency)",
+  "source": "sysctl hw.cachelinesize hw.l1dcachesize hw.l2cachesize hw.memsize",
+  "levels": [
+    {
+      "name": "L1D",
+      "capacity_bytes": 65536,
+      "line_bytes": 128
+    },
+    {
+      "name": "L2",
+      "capacity_bytes": 4194304,
+      "line_bytes": 128
+    },
+    {
+      "name": "DRAM",
+      "capacity_bytes": 17179869184,
+      "line_bytes": 128
+    }
+  ],
+  "scratchpad_bytes": 65536,
+  "vector_width_bytes": 16
+}

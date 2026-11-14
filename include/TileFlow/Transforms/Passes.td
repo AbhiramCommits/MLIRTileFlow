@@ -157,6 +157,26 @@ def TileFlowPromoteToScratchpad : Pass<"tileflow-promote-to-scratchpad",
 }
 
 //===----------------------------------------------------------------------===//
+// Cost model report
+//===----------------------------------------------------------------------===//
+
+def TileFlowLocalityReport : Pass<"tileflow-locality-report",
+                                   "::mlir::ModuleOp"> {
+  let summary = "Print the analytical data-locality cost report as JSON";
+  let description = [{
+    Evaluates every scheduled tileflow op with the analytical locality cost
+    model and prints one JSON object per op: bytes moved per memory level,
+    estimated DRAM traffic, arithmetic intensity, reuse-distance statistics
+    and scratchpad feasibility.
+  }];
+  let options = [
+    Option<"machinePath", "machine", "std::string", /*default=*/"\"\"",
+           "Path to a machine description JSON file">
+  ];
+  let dependentDialects = ["::mlir::tileflow::TileFlowDialect"];
+}
+
+//===----------------------------------------------------------------------===//
 // Composite pipelines
 //===----------------------------------------------------------------------===//
 
