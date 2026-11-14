@@ -31,8 +31,6 @@ using namespace mlir::tileflow;
 
 namespace {
 
-bool wantsRemarks() { return tileflowRemarks; }
-
 /// Tile one linalg op with SCF loops and replace its results.
 static LogicalResult tileOneOp(IRRewriter &rewriter, linalg::LinalgOp op,
                                ArrayRef<int64_t> tileSizes,
@@ -114,9 +112,26 @@ static unsigned fuseProducers(ModuleOp module, IRRewriter &rewriter) {
       if (!result)
         continue;
       ++fused;
-      if (wantsRemarks())
-        producer->emitRemark("tileflow fused producer into tiled loop nest");
+      emitTileflowRemark("tileflow fused producer into tiled loop nest");
     }
+  }
+
+  // A fused producer keeps a slice of its full-size output init. When that
+  // init is a tensor.empty, recreate the empty at tile size so no full-size
+  // buffer is ever materialized.
+  SmallVector<tensor::ExtractSliceOp> emptySlices;
+  module.walk([&](tensor::ExtractSliceOp slice) {
+    if (slice.getSource().getDefiningOp<tensor::EmptyOp>())
+      emptySlices.push_back(slice);
+  });
+  for (tensor::ExtractSliceOp slice : emptySlices) {
+    if (!slice->getBlock())
+      continue;
+    auto ty = cast<RankedTensorType>(slice.getType());
+    rewriter.setInsertionPoint(slice);
+    Value empty = tensor::EmptyOp::create(rewriter, slice.getLoc(),
+                                          ty.getShape(), ty.getElementType());
+    rewriter.replaceOp(slice, empty);
   }
 
   // Drop producers that lost all their uses.
@@ -219,12 +234,9 @@ static unsigned promoteOperands(ModuleOp module, IRRewriter &rewriter,
                                ValueRange{original});
       }
       ++promoted;
-      if (wantsRemarks())
-        op->emitRemark() << "tileflow promoted operand #" << index << " ("
-                         << operandName(op.getOperation(), index) << ", "
-                         << memrefTy.getNumElements() * memrefTy.getElementTypeBitWidth() / 8
-                         << " bytes) to " << (workgroup ? "workgroup" : "private")
-                         << " scratchpad";
+      emitTileflowRemark("tileflow promoted operand #" + llvm::Twine(index) +
+                         " to " + (workgroup ? "workgroup" : "private") +
+                         " scratchpad");
     }
   }
   return promoted;
@@ -252,8 +264,7 @@ struct TileFlowApplySchedulePass
             promoteNames.push_back(name.str());
     }
     if (ops.empty()) {
-      if (wantsRemarks())
-        module.emitRemark("tileflow-apply-schedule found no scheduled ops");
+      emitTileflowRemark("tileflow-apply-schedule found no scheduled ops");
       return;
     }
 
@@ -279,19 +290,18 @@ struct TileFlowApplySchedulePass
                      schedule.getLoopOrder().end());
 
       if (failed(tileOneOp(rewriter, op, tiles, order))) {
-        op->emitRemark("tileflow-apply-schedule skipped op: not tileable");
+        emitTileflowRemark("tileflow-apply-schedule skipped op: not tileable");
         continue;
       }
-      if (wantsRemarks())
-        module.emitRemark("tileflow applied schedule to a tiled loop nest");
+      emitTileflowRemark("tileflow applied schedule to a tiled loop nest");
     }
 
     stripSchedules(module.getOperation());
 
     if (fuse) {
       unsigned count = fuseProducers(module, rewriter);
-      if (wantsRemarks())
-        module.emitRemark() << "tileflow fused " << count << " producer(s)";
+      emitTileflowRemark("tileflow fused " + llvm::Twine(count) +
+                         " producer(s)");
     }
 
     if (promote) {
@@ -301,9 +311,8 @@ struct TileFlowApplySchedulePass
         return;
       }
       unsigned count = promoteOperands(module, rewriter, space, promoteNames);
-      if (wantsRemarks())
-        module.emitRemark() << "tileflow promoted " << count
-                            << " operand(s)";
+      emitTileflowRemark("tileflow promoted " + llvm::Twine(count) +
+                         " operand(s)");
     }
   }
 };
@@ -343,20 +352,20 @@ struct TileFlowTileForLocalityPass
       if (tiles.empty())
         continue;
       if (failed(tileOneOp(rewriter, op, tiles, order))) {
-        if (wantsRemarks())
-          op->emitRemark("tileflow-tile-for-locality skipped non-tileable op");
+        emitTileflowRemark("tileflow-tile-for-locality skipped non-tileable op");
         continue;
       }
-      if (wantsRemarks())
-        op->emitRemark() << "tileflow tiled op with ["
-                         << llvm::join(llvm::map_range(
-                                          tiles,
-                                          [](int64_t v) {
-                                            return std::to_string(v);
-                                          }),
-                                      ", ")
-                         << "]";
+      emitTileflowRemark(
+          "tileflow tiled op with [" +
+          llvm::Twine(llvm::join(llvm::map_range(tiles,
+                                                 [](int64_t v) {
+                                                   return std::to_string(v);
+                                                 }),
+                                  ", ")) +
+          "]");
     }
+    // The schedule has been consumed by this point.
+    stripSchedules(module.getOperation());
   }
 };
 
@@ -371,9 +380,8 @@ struct TileFlowFuseProducersPass
   void runOnOperation() override {
     IRRewriter rewriter(&getContext());
     unsigned count = fuseProducers(getOperation(), rewriter);
-    if (wantsRemarks())
-      getOperation().emitRemark() << "tileflow fused " << count
-                                  << " producer(s) into loop nests";
+    emitTileflowRemark("tileflow fused " + llvm::Twine(count) +
+                       " producer(s) into loop nests");
   }
 };
 
@@ -398,8 +406,8 @@ struct TileFlowPromoteToScratchpadPass
 
     std::vector<std::string> selected(operands.begin(), operands.end());
     unsigned count = promoteOperands(module, rewriter, space, selected);
-    if (wantsRemarks())
-      module.emitRemark() << "tileflow promoted " << count << " operand(s)";
+    emitTileflowRemark("tileflow promoted " + llvm::Twine(count) +
+                       " operand(s)");
   }
 };
 

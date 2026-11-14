@@ -2,7 +2,9 @@
 
 #include "mlir/Dialect/Bufferization/IR/Bufferization.h"
 #include "mlir/Dialect/Bufferization/Transforms/OneShotAnalysis.h"
+#include "mlir/Dialect/Bufferization/Transforms/Passes.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Pass/PassManager.h"
 #include "mlir/IR/BuiltinTypes.h"
 
 using namespace mlir;
@@ -15,6 +17,11 @@ llvm::cl::opt<bool> tileflow::tileflowRemarks(
 
 ScheduleAttr tileflow::getSchedule(Operation *op) {
   return dyn_cast_or_null<ScheduleAttr>(op->getAttr(kScheduleAttrName));
+}
+
+void tileflow::emitTileflowRemark(const llvm::Twine &message) {
+  if (tileflowRemarks)
+    llvm::errs() << "remark: " << message << "\n";
 }
 
 void tileflow::attachSchedule(Operation *op, ScheduleAttr schedule) {
@@ -57,10 +64,11 @@ bool tileflow::moduleHasTensors(ModuleOp module) {
 }
 
 LogicalResult tileflow::bufferizeModule(ModuleOp module) {
-  bufferization::OneShotBufferizationOptions options;
+  bufferization::OneShotBufferizePassOptions options;
   options.bufferizeFunctionBoundaries = true;
-  options.setFunctionBoundaryTypeConversion(
-      bufferization::LayoutMapOption::IdentityLayoutMap);
-  bufferization::BufferizationState state;
-  return bufferization::runOneShotBufferize(module, options, state);
+  options.functionBoundaryTypeConversion =
+      bufferization::LayoutMapOption::IdentityLayoutMap;
+  PassManager pm(module.getContext());
+  pm.addPass(bufferization::createOneShotBufferizePass(options));
+  return pm.run(module);
 }

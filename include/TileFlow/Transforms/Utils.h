@@ -19,6 +19,9 @@ constexpr StringLiteral kGpuTargetAttrName = "tileflow.gpu_target";
 /// Enables per-transformation remarks (`-tileflow-remarks`).
 extern llvm::cl::opt<bool> tileflowRemarks;
 
+/// Print a transformation remark to stderr when `-tileflow-remarks` is set.
+void emitTileflowRemark(const llvm::Twine &message);
+
 /// Read the schedule attached to `op`, or null.
 ScheduleAttr getSchedule(Operation *op);
 /// Attach `schedule` to `op` as a discardable attribute.
