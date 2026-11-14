@@ -119,6 +119,11 @@ def TileFlow_AttentionOp : TileFlow_Op<"attention", [Pure]> {
     static constexpr int64_t kIterationRank = 4;
     ::llvm::SmallVector<int64_t> getIterationSpaceExtents();
     bool getCausalFlag() { return static_cast<bool>(getCausal()); }
+    /// Attention scale, defaulting to 1.0 when the attribute is absent.
+    double getScaleValue() {
+      auto attr = getScaleAttr();
+      return attr ? attr.getValueAsDouble() : 1.0;
+    }
   }];
 }
 

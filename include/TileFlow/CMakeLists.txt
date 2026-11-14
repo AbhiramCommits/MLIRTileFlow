@@ -14,3 +14,7 @@ mlir_tablegen(Dialect/TileFlowAttrs.h.inc -gen-attrdef-decls
 mlir_tablegen(Dialect/TileFlowAttrs.cpp.inc -gen-attrdef-defs
   -attrdefs-dialect=tileflow)
 add_public_tablegen_target(TileFlowOpsIncGen)
+
+set(LLVM_TARGET_DEFINITIONS Transforms/Passes.td)
+mlir_tablegen(Transforms/Passes.h.inc -gen-pass-decls -name TileFlow)
+add_public_tablegen_target(TileFlowPassIncGen)
