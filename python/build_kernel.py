@@ -44,7 +44,16 @@ def _default_mlir_translate() -> str:
 
 MLIR_TRANSLATE = os.environ.get("MLIR_TRANSLATE", _default_mlir_translate())
 def _default_clang() -> str:
-    for candidate in ("/opt/homebrew/opt/llvm/bin/clang", shutil.which("clang")):
+    # The .ll files come from MLIR_TRANSLATE, so compile them with the clang from
+    # the same LLVM install. A system clang from an older LLVM (e.g. Ubuntu's
+    # /usr/bin/clang 18 next to llvm-23's mlir-translate) cannot parse newer IR.
+    sibling = Path(MLIR_TRANSLATE).parent / "clang"
+    candidates = [
+        str(sibling) if Path(MLIR_TRANSLATE).is_absolute() else None,
+        "/opt/homebrew/opt/llvm/bin/clang",
+        shutil.which("clang"),
+    ]
+    for candidate in candidates:
         if candidate and Path(candidate).exists():
             return candidate
     return "clang"
